@@ -1,18 +1,19 @@
-import Login from '../src/pages/Login';
-//import Dashboard from '../src/pages/Dashboard'
-//import Sidebar from './components/Sidebar'
-//import Footer from './components/Footer'
+import { Routes, Route } from 'react-router-dom';
+import  Login   from './pages/Login';
+import Dashboard from './pages/Dashboard';
+
+//import { DiVim } from 'react-icons/di';
 
 
 function App() {
   return (
-    <div>
-      <div>
-        <Login />
-      </div>
-       
-    </div>
-  )
+
+    <Routes>
+      <Route path='/' element={<Dashboard />} />
+      <Route path='/login' element={<Login />} />
+    </Routes>
+   
+  );
 }
 
 export default App;

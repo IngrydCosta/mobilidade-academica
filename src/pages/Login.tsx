@@ -1,7 +1,8 @@
 import {Link} from 'react-router-dom';
 import{useState} from 'react';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input'
+import Input from '../components/ui/Input';
+
 
 export default function Login() {
     const [email, setEmail] = useState<string>('');
@@ -20,12 +21,13 @@ return(
                 </div>
             </div>
         </div>
-            <div className='flex 1 flex-col justify-center'>
-                <h2 className='text-xl  font-serif mb-4'>Mobilidade Académica</h2>
-                <p className='opacity-80 mt-4 text-sm'>Plataforma europeia de mobilidade estudantil</p>
+            <div className='flex 1 flex-col justify-center gap-5'>
+                <h2 className='text-3xl  font-serif mb-5'>Mobilidade Académica</h2>
+                <p className='opacity-80 mt-4 text-md'>Plataforma europeia de mobilidade estudantil</p>
+                 <Link to='/Dashboard' className='text-sm flex items-center p-05 mb-30 font-serif text-[#D3A969] font-semibold'>Ver dashboard público<span></span></Link>
             </div>
 
-            <Link to='/Dashboard' className='text-sm flex items-center gap-4 p-05 mb-30 font-serif text-[#D3A969] font-semibold'>Ver dashboard público<span></span></Link>
+           
         </section>
 
         <section className='w-full md:w-1/2 bg-whit flex flex-col justify-center items-center p-8'>
