@@ -24,7 +24,7 @@ return(
             <div className='flex 1 flex-col justify-center gap-5'>
                 <h2 className='text-3xl  font-serif mb-5'>Mobilidade Académica</h2>
                 <p className='opacity-80 mt-4 text-md'>Plataforma europeia de mobilidade estudantil</p>
-                 <Link to='/Dashboard' className='text-sm flex items-center p-05 mb-30 font-serif text-[#D3A969] font-semibold'>Ver dashboard público<span></span></Link>
+                 <Link to='/Dashboard' className='text-sm flex items-center p-05 mb-30 font-serif text-[#D3A969] font-semibold'><span>Ver dashboard público</span></Link>
             </div>
 
            
