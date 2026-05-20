@@ -7,7 +7,7 @@ function DashboardInterno() {
   return (
     <div>
       <Sidebar />
-      <Title />
+      <Title title="Dashboard de Mobilidade" subtitle="Visão geral da mobilidade estudantil"/>
     </div>
   )
 }
