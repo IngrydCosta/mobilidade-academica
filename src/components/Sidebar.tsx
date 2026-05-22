@@ -9,7 +9,7 @@ import { AiOutlineLogin } from "react-icons/ai";
  function Sidebar(){
     
     return(
-        <aside className='w-64 h-screen bg-[#173764] text-white flez flex-col  left-0 top-0 border-r border-write/10'>
+        <aside className='fixed left-0 top-0 w-64 h-screen bg-[#173764] text-[#FFFFFF] flex flex-col border-r border-white/10'>
             <div className='p-6 flex items-center gap-3 border-b border-white/5'>
             <div className='bg-orange-200 p-1.5 rounded-md text-[#002147] text-sm'></div>
             <div>
@@ -33,7 +33,7 @@ import { AiOutlineLogin } from "react-icons/ai";
                 <h3 className='font-light text-[#728297] text-xs p-1.5 px-05'>DOCUMENTAÇÃO</h3>
                 <Link to="/introducao" className='p-2.5 cursor-pointer px-10 flex items-center gap-2'><IoBookOutline className="h-5 w-5 md:h-6 md:w-6 text-[#FFFFFF]" /><span>Introdução</span></Link>
             </div>
-            <div className=' flex flex-col p-2.5 gap-3 mt-90'>
+            <div className=' flex flex-col p-2.5 gap-3 mt-auto'>
                     <Link to="/login" className='p-2.5 cursor-pointer px-10 flex flex-row items-center gap-2.5 text-lg'><AiOutlineLogin className='h-5 w-5 md:h-6 md:w-6 text-[#FFFFFF]'/><span>Sair</span></Link>
             </div>
         </aside>

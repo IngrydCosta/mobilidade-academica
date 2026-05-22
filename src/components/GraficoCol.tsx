@@ -1,10 +1,11 @@
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 const data = [
@@ -30,32 +31,45 @@ const data = [
   },
 ];
 
-function Grafico() {
+function GraficoComparacaoAnual() {
   return (
     <div className="bg-white p-6 rounded-xl h-80">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <XAxis dataKey="ano" />
-          <YAxis />
+        
+        <BarChart data={data}>
+          
+          <XAxis
+            dataKey="ano"
+            tick={{ fill: "#404c4e" }}
+          />
+
+          <YAxis
+            tick={{ fill: "#404c4e" }}
+          />
+
           <Tooltip />
 
-          <Line
-            type="monotone"
+          <Legend />
+
+          <Bar
             dataKey="enviados"
-            stroke="#173764"
-            strokeWidth={3}
+            fill="#173764"
+            radius={[6, 6, 0, 0]}
+            name="Estudantes Enviados"
           />
 
-          <Line
-            type="monotone"
+          <Bar
             dataKey="recebidos"
-            stroke="#D9A95E"
-            strokeWidth={3}
+            fill="#D9A95E"
+            radius={[6, 6, 0, 0]}
+            name="Estudantes Recebidos"
           />
-        </LineChart>
+
+        </BarChart>
+
       </ResponsiveContainer>
     </div>
   );
 }
 
-export default Grafico;
+export default GraficoComparacaoAnual;

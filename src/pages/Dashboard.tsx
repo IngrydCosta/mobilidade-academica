@@ -3,11 +3,11 @@ import { PiStudentFill } from "react-icons/pi";
 import { FiSend } from "react-icons/fi";
 import { RiUserReceived2Line } from "react-icons/ri";
 import { PiMedal } from "react-icons/pi";
-import Grafico from '../components/Grafico'
 import { TbWorldPin } from "react-icons/tb";
 import { TbWorldCheck } from "react-icons/tb";
 import { MdOutlineSchool } from "react-icons/md";
 import { useTranslation } from "react-i18next";
+import GraficoRow from "../components/GraficoRow";
 
 
 
@@ -70,7 +70,7 @@ function Dashboard() {
 
             <div className="bg-[#FFFFFF] shadow-lg p-5 ml-5 mr-5 rounded-lg">
                 <span className="text-[#0E284E] font-medium text-3xl"><span>{t("graphic")}</span></span>
-                <Grafico />
+                <GraficoRow />
             </div>
 
             <div className="bg-linear-to-br from-[#0E284E]  to-[#17498b] text-[#d4d3ce] ml-5 mr-5 mb-4 rounded-lg p-3">
