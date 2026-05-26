@@ -9,7 +9,7 @@ import { AiOutlineLogin } from "react-icons/ai";
  function Sidebar(){
     
     return(
-        <aside className='fixed left-0 top-0 w-64 h-screen bg-[#173764] text-[#FFFFFF] flex flex-col border-r border-white/10'>
+        <aside className=' left-0 top-0 w-64 min-h-screen bg-[#173764] text-[#FFFFFF] flex flex-col border-r border-white/10'>
             <div className='p-6 flex items-center gap-3 border-b border-white/5'>
             <div className='bg-orange-200 p-1.5 rounded-md text-[#002147] text-sm'></div>
             <div>

@@ -1,28 +1,19 @@
-export type Column = {
-  className: string;
+export type Column<T> = {
+  className?: string;
   header: string;
-  accessor: keyof MobilityData;
-  
-};
-
-type MobilityData = {
-  universidade: string;
-  pais: string;
-  ano: number;
-  enviados: number;
-  recebidos: number;
-  total: number;
-};
-
-type TableProps = {
-  columns: Column[];
-  data: MobilityData[];
-  className?:string;
+  accessor: keyof T;
 };
 
 
-function Table({columns, data, className}: TableProps) {
 
+type TableProps<T> = {
+  columns: Column<T>[];
+  data: T[];
+  className?: string;
+};
+
+
+function Table<T extends Record<string, React.ReactNode>>({columns, data, className,}: TableProps<T>) {
 
 
   return (
@@ -34,7 +25,7 @@ function Table({columns, data, className}: TableProps) {
           <tr>
             {columns.map((column) => (
               <th
-                key={column.accessor}
+                key={String(column.accessor)}
                 className="p-4"
               >
                 {column.header}
@@ -50,7 +41,7 @@ function Table({columns, data, className}: TableProps) {
               className="border-b border-gray-200 hover:bg-gray-50 ">
               {columns.map((column) => (
                 <td
-                  key={column.accessor}
+                 key={String(column.accessor)}
                    className={`p-4 ${column.className || ""}`}
                 >
                   {item[column.accessor]}

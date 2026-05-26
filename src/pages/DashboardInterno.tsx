@@ -11,8 +11,12 @@ import { RiUserReceived2Line } from "react-icons/ri";
 import GraficoRow from "../components/GraficoRow";
 import GraficoCol from "../components/GraficoCol";
 import Table, { type Column } from "../components/Table";
+import { useState } from "react";
 
-const columns: Column[] = [
+
+
+
+const columns: Column<MobilityData>[] = [
   {
     header: "UNIVERSIDADE",
     accessor: "universidade",
@@ -79,21 +83,34 @@ const mobilityData = [
   },
 ];
 
+type MobilityData = {
+  universidade: string;
+  pais: string;
+  ano: number;
+  enviados: number;
+  recebidos: number;
+  total: number;
+};
 
 function DashboardInterno() {
+
+const[universityFilter, setUniversityFilter] = useState("")
+const[yearFilter, setYearFilter] = useState("")
+const[countryFilter, setCountryFilter] = useState("")
+
   return (
     <div className="flex min-h-screen ">
       <Sidebar />
       
-      <main className="flex-1 md:ml-64 p-4 md:p-10">
+        <main className="flex-1 px-4 md:px-10 py-4">
         <Title title="Dashboard de Mobilidade" subtitle="Visão geral da mobilidade estudantil"/>
         <section className="p-6  bg-[#FFFFFF] border border-gray-300 rounded-lg">
           <h1 className="text-[#0E284E] text-2xl font-medium flex flex-col md:flex-row gap-4 items-end">Filtros</h1>
 
           <div className="flex flex-col md:flex-row gap-4 items-end">
-        <UniversityFilter />
-        <CountryFilter />
-        <YearFilter />
+        <UniversityFilter value={universityFilter} onChange={setUniversityFilter}/>
+        <CountryFilter value={countryFilter} onChange={setCountryFilter} />
+        <YearFilter value={yearFilter} onChange={setYearFilter} />
           </div>
         
         </section>
