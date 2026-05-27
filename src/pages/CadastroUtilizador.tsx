@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar"
 import Title from "../components/ui/Title"
-import SaveButton from "../components/ui/SaveButton";
 import Input from "../components/ui/Input";
 import Table, { type Column } from "../components/Table";
 import UniversityFilter from "../components/filters/UniversityFilter";
@@ -72,7 +71,7 @@ function CadastroUtilizador() {
 
     const newUser: UserData = {
       nome: name,
-      email,
+      email: email,
       perfil: profile,
       universidade: universityFilter,
     };
@@ -132,14 +131,12 @@ function CadastroUtilizador() {
   className="cursor-pointer text-[#2b2e2e] bg-transparent outline-none w-full"
 >
   <option value="Estudante">Estudante</option>
-  <option value="Gestor de Mobilidade">
-    Gestor de Mobilidade
-  </option>
+  <option value="Gestor de Mobilidade">Gestor de Mobilidade</option>
   <option value="Administrador">Administrador</option>
 </select>
                   </div>
 
-                  <SaveButton onClick={handleSave} nameButton="Guardar" />
+                  
                 </div>
               </form>
             </div>
