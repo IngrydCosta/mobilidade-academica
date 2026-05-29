@@ -5,6 +5,7 @@ import { LuUsers } from "react-icons/lu";
 import { LiaUniversitySolid } from "react-icons/lia";
 import { IoBookOutline } from "react-icons/io5";
 import { AiOutlineLogin } from "react-icons/ai";
+import { GoTrophy } from "react-icons/go";
 
  function Sidebar(){
     
@@ -21,6 +22,7 @@ import { AiOutlineLogin } from "react-icons/ai";
              <div className='flex flex-col p-2.5 gap-3 border-b border-white/5 w-64'>
             
                 <Link to="/dashboard" className='bg-[#D9A95E] text-[#0C2445] rounded-md p-1.5 px-10 cursor-pointer flex items-center gap-2'><MdDashboard className='h-5 w-5 md:h-6 md:w-6 text-[#0C2445]'/><span>Dashboard</span></Link>
+                <Link to="/rankings" className='p-2.5 cursor-pointer px-10 flex items-center gap-2'> <GoTrophy className='h-5 w-5 md:h-6 md:w-6 text-[#FFFFFF] shrink-0'/><span>Rankings</span></Link>
                 <Link to="/registarMobilidade" className='p-2.5 cursor-pointer px-10 flex items-center gap-2 whitespace-nowrap'><IoAddCircleOutline className="h-5 w-5 md:h-6 md:w-6 text-[#FFFFFF] shrink-0"/><span>Registar Mobilidade</span></Link>
         
             </div>

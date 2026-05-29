@@ -1,4 +1,3 @@
-
 import Card from "../components/Card";
 import CountryFilter from "../components/filters/CountryFilter";
 import UniversityFilter from "../components/filters/UniversityFilter";

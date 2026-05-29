@@ -6,8 +6,9 @@ import CadastroMobilidade from './pages/CadastroMobilidade';
 import CadastroUtilizador from './pages/CadastroUtilizador';
 import CadastroUniversidades from './pages/CadastroUniversidades';
 import Introducao from './pages/Introducao';
+import Rankings from './pages/Rankings'
 
-//import { DiVim } from 'react-icons/di';
+
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Route path='/cadastroUtilizador' element={<CadastroUtilizador />} />
       <Route path='/cadastroUniversidade' element={<CadastroUniversidades />} />
       <Route path='/introducao' element={<Introducao />} />
+      <Route path='/rankings' element={<Rankings />} />
     </Routes>
    
   );
