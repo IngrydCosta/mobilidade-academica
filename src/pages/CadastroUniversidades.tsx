@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar"
 import Title from "../components/ui/Title"
 import Input from "../components/ui/Input";
 import Card from "../components/Card";
 import SaveButton from "../components/ui/SaveButton";
 import { FaUniversity } from "react-icons/fa";
+import  axios  from 'axios';
+
 
 const initialUniversity: UniversityData[] = [
   {
@@ -64,17 +66,24 @@ function CadastroUniversidades() {
   const [name, setName] = useState("");
   const [country,setCountry] = useState("");
   const [university, setUniversity] = useState<UniversityData[]>(initialUniversity);
-  
-   function handleSave(e?: React.SyntheticEvent) {
-      e?.preventDefault();
-  
-      const newUniversity: UniversityData = {
-        icon:icon,
-        nome: name,
-        pais: country,
-      };
 
-      setUniversity((prevUniversity) => [...prevUniversity, newUniversity]);
+  useEffect(() =>{
+   async function findUniversity(){
+        const resposta = await axios.get('http://localhost:5173/university')
+        
+        setUniversity(resposta.data)
+    }
+    findUniversity()
+  }, [])
+  
+  async function handleSave(e?: React.SyntheticEvent) {
+      e?.preventDefault();
+
+     await axios.post('http://localhost:5173/university', {
+        icon: icon,
+        nome: name,
+        pais: country
+      })
     
     setIcon("");
     setName("");
