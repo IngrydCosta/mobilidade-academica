@@ -4,7 +4,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 
-export default function Login() {
+ function Login() {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
 
@@ -60,3 +60,5 @@ return(
 )
 
 };
+
+export default Login
