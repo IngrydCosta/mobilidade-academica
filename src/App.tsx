@@ -20,7 +20,7 @@ function App() {
       <Route path='/dashboard' element={<DashboardInterno />} />
       <Route path='/registarMobilidade' element={<CadastroMobilidade />} />
       <Route path='/cadastroUtilizador' element={<CadastroUtilizador />} />
-      <Route path='/university' element={<CadastroUniversidades />} />
+      <Route path='/cadastroUniversidade' element={<CadastroUniversidades />} />
       <Route path='/introducao' element={<Introducao />} />
       <Route path='/rankings' element={<Rankings />} />
     </Routes>
