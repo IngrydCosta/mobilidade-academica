@@ -1,12 +1,29 @@
-import {Link} from 'react-router-dom';
-import{useState} from 'react';
-import Button from '../components/ui/Button';
+import {Link, useNavigate } from 'react-router-dom';
+import{ useState} from 'react';
 import Input from '../components/ui/Input';
+import axios from "axios";
+import Button from '../components/ui/Button';
+
+
 
 
  function Login() {
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const navigate = useNavigate();
+
+    async function handleLogin(e?: React.FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
+
+    await axios.post("http://localhost:3333/login", {
+        email: email,
+        password: password,
+    });
+
+    navigate("/dashboard");
+
+  }
 
 
 return(
@@ -33,7 +50,7 @@ return(
         <section className='w-full md:w-1/2 bg-whit flex flex-col justify-center items-center p-8'>
             <div className='w-full max-w-md'>
                 <h3 className='text-xl font-serif mb-8'>Bem-vindo</h3>
-                <form className='space-y-6'>
+                <form className='space-y-6' onSubmit={handleLogin}>
                     <Input
                         label='Email'
                         type='email' 
@@ -50,9 +67,10 @@ return(
                         onChange={(e) => setPassword(e.target.value)}
                         />
 
-                        <Button type='submit'>
-                            Iniciar sessão 
-                        </Button>   
+                        <Button>
+                            Iniciar Sessão
+                        </Button>
+                         
                 </form>
             </div>
         </section>
