@@ -1,88 +1,94 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar"
 import Title from "../components/ui/Title"
 import Input from "../components/ui/Input";
 import Table, { type Column } from "../components/Table";
 import UniversityFilter from "../components/filters/UniversityFilter";
+import axios from "axios";
+import SaveButton from "../components/ui/SaveButton";
 
-const columns: Column<UserData>[] = [
-  {
-    header: "NOME",
-    accessor: "nome",
-  },
-
-  {
-    header: "EMAIL",
-    accessor: "email",
-  },
-
-  {
-    header: "PERFIL",
-    accessor: "perfil",
-  },
-
-  {
-    header: "UNIVERSIDADE",
-    accessor: "universidade",
-  },
-];
-
-const initialUsers: UserData[] = [
-  {
-    nome: "Ana Silva",
-    email: "ana@universidade.eu",
-    perfil: "Administrador",
-    universidade: "Universidade de Lisboa",
-  },
-
-  {
-    nome: "Carlos Mendes",
-    email: "carlos@universidade.eu",
-    perfil: "Gestor de Mobilidade",
-    universidade: "Universidade de Coimbra",
-  },
-
-  {
-    nome: "Laura de Jesus",
-    email: "lauradejesus@universidade.eu",
-    perfil: "Estudante",
-    universidade: "Sorbonne Université",
-  },
-];
 
 type UserData = {
+  university?: {
+    nome: string;
+  };
   nome: string;
   email: string;
   perfil: string;
-  universidade: string;
+  universityId: string;
 };
+
+
 
 function CadastroUtilizador() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState("");
-  const [users, setUsers] = useState<UserData[]>(initialUsers);
-  const [universityFilter, setUniversityFilter] = useState("");
+  const [perfil, setProfile] = useState("");
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [universityId, setUniversityId] = useState<string>("");
 
-  function handleSave(e?: React.SyntheticEvent) {
+  
+    useEffect(() => {
+    const token = localStorage.getItem("token");
+  
+      async function findUser() {
+        const resposta = await axios.get("http://localhost:3333/user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUsers(resposta.data);
+      }
+      findUser();
+    }, []);
+
+  async function handleSave(e?: React.SyntheticEvent) {
     e?.preventDefault();
 
-    const newUser: UserData = {
+    const token = localStorage.getItem("token");
+
+    await axios.post("http://localhost:3333/user", {
       nome: name,
       email: email,
-      perfil: profile,
-      universidade: universityFilter,
-    };
+      password: password,
+      perfil: perfil,
+      universityId: universityId,
+    },
+    
+  {
+     headers: {
+          Authorization: `Bearer ${token}`,
 
-    setUsers((prevUsers) => [...prevUsers, newUser]);
+        },
+      }
+  );
 
     setName("");
     setEmail("");
     setPassword("");
     setProfile("");
   }
+
+  const columns: Column<UserData>[] = [
+  {
+    header: "Nome",
+    accessor: "nome",
+  },
+  {
+    header: "Email",
+    accessor: "email",
+  },
+  {
+    header: "Perfil",
+    accessor: "perfil",
+  },
+  {
+    header: "Universidade",
+    render: (row) => row.university?.nome ?? "-",
+  }
+];
 
   return (
     <div className="flex min-h-screen ">
@@ -109,7 +115,7 @@ function CadastroUtilizador() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
 
-                  <UniversityFilter  value={universityFilter} onChange={setUniversityFilter} />
+                  <UniversityFilter  value={universityId} onChange={setUniversityId} />
 
                 <Input
                   label='Palavra-passe'
@@ -121,22 +127,22 @@ function CadastroUtilizador() {
 
 
                 <div className="flex flex-col w-full">
-                  <label htmlFor="profile" className="text-[#404c4e] font-medium text-md">Perfil</label>
+                  <label htmlFor="perfil" className="text-[#404c4e] font-medium text-md">Perfil</label>
                   <div className="w-full bg-[#F8FAFC] border border-gray-300 rounded-md p-2">
                     <select
-  name="profile"
-  id="profile"
-  value={profile}
-  onChange={(e) => setProfile(e.target.value)}
-  className="cursor-pointer text-[#2b2e2e] bg-transparent outline-none w-full"
->
-  <option value="Estudante">Estudante</option>
-  <option value="Gestor de Mobilidade">Gestor de Mobilidade</option>
-  <option value="Administrador">Administrador</option>
-</select>
+                      name='perfil'
+                      id='perfil'
+                      value={perfil}
+                      onChange={(e) => setProfile(e.target.value)}
+                      className="cursor-pointer text-[#2b2e2e] bg-transparent outline-none w-full"
+                    >
+                      <option>Selecione</option>
+                      <option value="ESTUDANTE">Estudante</option>
+                      <option value="GESTOR_MOBILIDADE">Gestor de Mobilidade</option>
+                      <option value="ADMINISTRADOR">Administrador</option>
+                    </select>
                   </div>
-
-                  
+              <SaveButton onClick={handleSave} nameButton="Guardar" />
                 </div>
               </form>
             </div>

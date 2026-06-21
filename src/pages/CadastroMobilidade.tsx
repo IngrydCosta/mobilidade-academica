@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import UniversityFilter from "../components/filters/UniversityFilter"
 import YearFilter from "../components/filters/YearFilter"
 import Sidebar from "../components/Sidebar"
@@ -7,54 +7,88 @@ import StudentNumberInput from "../components/StudentNumberInput"
 import Title from "../components/ui/Title"
 import SaveButton from "../components/ui/SaveButton"
 import ClearButton from "../components/ui/ClearButton"
+import axios from "axios"
 
-
+type MobilityData = {
+  id: string;
+  nome: string;
+  pais: string;
+};
 
 
 function CadastroMobilidade() {
 
-  const [universityFilter, setUniversityFilter] = useState("")
+  const [universityId, setUniversityId] = useState("")
   const [yearFilter, setYearFilter] = useState("")
   const [sentStudents, setSentStudents] = useState(0);
   const [receivedStudents, setReceivedStudents] = useState(0);
-  const universityCountryMap: Record<string, string> = {
-  "Universidade de Lisboa": "Portugal",
-  "Universidade de Coimbra": "Portugal",
-  "Sorbonne Université": "França",
-  "Sapienza Università": "Itália",
-  "Universidad de Barcelona": "Espanha",
-};
+  const [universities, setUniversities] = useState<MobilityData[]>([]);
+  
+ 
 
- const country = universityCountryMap[universityFilter] || "-";
+ useEffect(() => {
+  const token = localStorage.getItem("token");
 
- const totalStudents = sentStudents + receivedStudents;
+  async function loadUniversities() {
+    const resposta = await axios.get("http://localhost:3333/university", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setUniversities(resposta.data);
+  }
+
+  loadUniversities();
+}, []);
+
+ const selectedUniversity = universities.find(
+    (u) => u.id === universityId
+  );
+
+  const country = selectedUniversity?.pais || "-";
+
+  const totalStudents = sentStudents + receivedStudents;
+
 
   function clearFilters(){
 
-  setUniversityFilter("");
+  setUniversityId("");
   setYearFilter("");
   setSentStudents(0);
   setReceivedStudents(0);
 
 }
 
-function handleSave(){
 
-  const mobilityRegister = {
-    university: universityFilter,
-    country,
-    year: yearFilter,
-    sentStudents,
-    receivedStudents,
-    total: totalStudents,
+async function handleSave(e?: React.SyntheticEvent) {
+    e?.preventDefault();
+
+    const ano = Number(yearFilter);
+
+  if (!ano) {
+    alert("Selecione o ano");
+    return;
+  }
 
 
-  };
-   console.log(mobilityRegister)
+   const token = localStorage.getItem("token");
 
+    await axios.post("http://localhost:3333/mobility", {
+   ano: Number(yearFilter),
+  enviados: sentStudents,
+  recebidos: receivedStudents,
+  universityId,
+  },
+ { headers: {
+          Authorization: `Bearer ${token}`,
+
+        },
+      },
+  
+  );
+
+  clearFilters();
 }
-
-
+  
   return (
     <div className="flex min-h-screen ">
       <Sidebar />
@@ -65,7 +99,7 @@ function handleSave(){
           <section className=" w-full p-6 bg-[#FFFFFF] border border-gray-300 rounded-lg mt-5 flex-1">
             <div className="flex flex-col w-full">
               <div className="flex flex-row md:flex-col gap-4">
-                <UniversityFilter value={universityFilter} onChange={setUniversityFilter} />
+                <UniversityFilter value={universityId} onChange={setUniversityId} />
                 <YearFilter value={yearFilter} onChange={setYearFilter} />
               </div>
               <div className="flex flex-row  gap-4 mt-4 items-center w-full">
@@ -87,32 +121,32 @@ function handleSave(){
 
               <div className="text-[#d4d3ce] flex flex-col gap-2">
                 <p className="flex flex-col">  
-                   <strong>UNIVERSIDADE</strong>{" "}
-                   {universityFilter || "-"}
+                   <strong>UNIVERSIDADE</strong> {selectedUniversity?.nome || "-"}
                 </p>
              
                 <p className="flex flex-col">
-                  <strong>PAÍS</strong>{" "}
-                  {country}
+                  <strong>PAÍS</strong>{country}
+               
                 </p>
+
                 <p className="flex flex-col">
-                  <strong>ANO</strong>{" "}
-                  {yearFilter || "-"}
+                  <strong>ANO</strong>{yearFilter || "-"}
+                 
                 </p>
                 <div>
                   <p className="flex flex-col">
-                    <strong>ENVIADOS</strong>{" "}
-                    {sentStudents || "-"}
+                    <strong>ENVIADOS</strong>{sentStudents}
+                    
                   </p>
                   <p className="flex flex-col">
-                    <strong>RECEBIDOS</strong>{" "}
-                    {receivedStudents || "-"}
+                    <strong>RECEBIDOS</strong>{receivedStudents}
+                    
                   </p>
                 </div>
                 <div>
                   <p>
-                    <strong>TOTAL</strong>{" "}
-                    {totalStudents}
+                    <strong>TOTAL</strong>  {totalStudents}
+                   
                   </p>
                 </div>
 
@@ -132,10 +166,9 @@ function handleSave(){
             <p><span>4. Total: 30</span></p>
           </div>
         </section>
-
       </main>
     </div>
-  )
+  );
 }
 
-export default CadastroMobilidade
+export default CadastroMobilidade;

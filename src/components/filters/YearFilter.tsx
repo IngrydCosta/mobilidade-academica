@@ -1,44 +1,46 @@
-type YearFilter ={
-  value?:string
+type YearFilterProps = {
+  value?: string;
   onChange: (value: string) => void;
-  label?: string
-  showAllOption?:boolean;
-}
+  label?: string;
+};
 
+function YearFilter({
+  value,
+  onChange,
+  label = "Ano",
+}: YearFilterProps) {
+  const startYear = 2020;
+  const currentYear = new Date().getFullYear();
 
-function YearFilter({value, onChange, label, showAllOption}: YearFilter) {
-
-
+  const years = Array.from(
+    { length: currentYear - startYear + 1 },
+    (_, i) => String(currentYear - i)
+  );
 
   return (
-   <div className="flex flex-col w-full">
-        <label htmlFor="year" className="text-[#404c4e] font-medium text-md">{label}</label>
-        <div className="bg-[#F8FAFC] border border-gray-300 rounded-md p-2 mr-5 w-full">
-                <select name="year" id="year" value={value} onChange={(e) => onChange(e.target.value)} 
-                className="cursor-pointer text-[#2b2e2e] bg-transparent outline-none w-full">
-                   {showAllOption && <option value="">Todos</option>}
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                </select>
-        </div>
-        
+    <div className="flex flex-col w-full">
+      <label className="text-[#404c4e] font-medium text-md">
+        {label}
+      </label>
+
+      <div className="bg-[#F8FAFC] border border-gray-300 rounded-md p-2 mr-5 w-full">
+        <select
+          id="year"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="cursor-pointer text-[#2b2e2e] bg-transparent outline-none w-full"
+        >
+           <option value="">Selecione um ano</option>
+
+          {years.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
-  )
+  );
 }
 
-export default YearFilter
-
-
-
-
-
-
-
-
-
- 
- 
+export default YearFilter;

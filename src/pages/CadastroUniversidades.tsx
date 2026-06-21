@@ -19,9 +19,19 @@ function CadastroUniversidades() {
   const [country, setCountry] = useState("");
   const [university, setUniversity] = useState<UniversityData[]>([]);
 
+  
+
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    
     async function findUniversity() {
-      const resposta = await axios.get("http://localhost:3333/university");
+      const resposta = await axios.get("http://localhost:3333/university", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       setUniversity(resposta.data);
     }
     findUniversity();
@@ -30,11 +40,21 @@ function CadastroUniversidades() {
   async function handleSave(e?: React.SyntheticEvent) {
     e?.preventDefault();
 
+     const token = localStorage.getItem("token");
+      console.log("TOKEN: ", token)
+
     await axios.post("http://localhost:3333/university", {
       icon: icon,
       nome: name,
       pais: country,
-    });
+    },
+  {
+        headers: {
+          Authorization: `Bearer ${token}`,
+
+        },
+      }
+  );
 
     setIcon("");
     setName("");

@@ -8,15 +8,41 @@ import { TbWorldCheck } from "react-icons/tb";
 import { MdOutlineSchool } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import GraficoRow from "../components/GraficoRow";
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+type DashboardData = {
+
+  totalMobilidades: number;
+  totalEnviados: number;
+  totalRecebidos: number;
+  anoComMaiorMobilidade: number;
+  
+};
 
 
 
 function Dashboard() {
 
    const { t } = useTranslation();
+   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
 
-
-
+useEffect(() => {
+    const token = localStorage.getItem("token");
+  
+      async function findDashboard() {
+        const resposta = await axios.get("http://localhost:3333/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+          console.log(resposta.data);
+  
+        setDashboard(resposta.data);
+      }
+      findDashboard();
+    }, []);
+console.log(dashboard)
     return (
         <div className="flex flex-col gap-10">
             <Navbar />
@@ -31,7 +57,7 @@ function Dashboard() {
                     <div className="bg-[#FFFFFF] border border-[#404c4e]/20 shadow-md px-10 py-10 rounded-lg flex items-center justify-between ml-5 ">
                         <div className="flex flex-col">
                             <span className="text-[#404c4e]"><span>{t("card1")}</span></span>
-                            <span className="text-[#0E284E] font-bold text-2xl">3156</span>
+                            <span className="text-[#0E284E] font-bold text-2xl">{dashboard?.totalMobilidades ?? 0}</span>
                         </div>
                         <span className="bg-[#E7EAED] p-3 rounded-lg"><PiStudentFill className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />
                         </span>
@@ -40,7 +66,7 @@ function Dashboard() {
                     <div className="bg-[#FFFFFF] border border-[#404c4e]/20 shadow-md px-10 py-10 rounded-lg flex items-center justify-between ml-5 ">
                         <div className="flex flex-col">
                             <span className="text-[#404c4e]"><span>{t("card2")}</span></span>
-                            <span className="text-[#0E284E] font-bold text-2xl">1680</span>
+                            <span className="text-[#0E284E] font-bold text-2xl">{dashboard?.totalEnviados ?? 0}</span>
                         </div>
                         <span className="bg-[#E7EAED] p-3 rounded-lg"> <FiSend className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />
                         </span>
@@ -49,7 +75,7 @@ function Dashboard() {
                     <div className="bg-[#FFFFFF] border border-[#404c4e]/20 shadow-md px-10 py-10 rounded-lg flex items-center justify-between ml-5 ">
                         <div className="flex flex-col">
                             <span className="text-[#404c4e]"><span>{t("card3")}</span></span>
-                            <span className="text-[#0E284E] font-bold text-2xl">1476</span>
+                            <span className="text-[#0E284E] font-bold text-2xl">{dashboard?.totalRecebidos ?? 0}</span>
                         </div>
                         <span className="bg-[#E7EAED] p-3 rounded-lg"> <RiUserReceived2Line className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />
                         </span>
@@ -58,7 +84,7 @@ function Dashboard() {
                     <div className="bg-[#FFFFFF] border border-[#404c4e]/20 shadow-md px-10 py-10 rounded-lg flex items-center justify-between ml-5 ">
                         <div className="flex flex-col">
                             <span className="text-[#404c4e]"><span>{t("card4")}</span></span>
-                            <span className="text-[#0E284E] font-bold text-2xl">2024</span>
+                            <span className="text-[#0E284E] font-bold text-2xl">{dashboard?.anoComMaiorMobilidade ?? 0}</span>
                         </div>
                         <span className="bg-[#E7EAED] p-3 rounded-lg"><PiMedal className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />
                         </span>

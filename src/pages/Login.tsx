@@ -16,10 +16,13 @@ import Button from '../components/ui/Button';
     async function handleLogin(e?: React.FormEvent<HTMLFormElement>) {
     e?.preventDefault();
 
-    await axios.post("http://localhost:3333/login", {
+    const response = await axios.post("http://localhost:3333/login", {
         email: email,
         password: password,
     });
+
+
+    localStorage.setItem("token", response.data.token);
 
     navigate("/dashboard");
 

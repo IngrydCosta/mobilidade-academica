@@ -1,10 +1,11 @@
+import React from "react";
+
 export type Column<T> = {
   className?: string;
   header: string;
-  accessor: keyof T;
+  accessor?: keyof T;
+  render?: (row: T) => React.ReactNode;
 };
-
-
 
 type TableProps<T> = {
   columns: Column<T>[];
@@ -12,22 +13,20 @@ type TableProps<T> = {
   className?: string;
 };
 
-
-function Table<T extends Record<string, React.ReactNode>>({columns, data, className,}: TableProps<T>) {
-
-
+function Table<T extends Record<string, unknown>>({
+  columns,
+  data,
+  className,
+}: TableProps<T>) {
   return (
-   <div className= {`overflow-x-auto  border border-gray-300 bg-white shadow-md ${className}`}>
-      
-       <table className="w-full border-collapse text-left">
-
+    <div
+      className={`overflow-x-auto border border-gray-300 bg-white shadow-md ${className}`}
+    >
+      <table className="w-full border-collapse text-left">
         <thead className="bg-[#F3F6F8] text-[#404c4e]">
           <tr>
             {columns.map((column) => (
-              <th
-                key={String(column.accessor)}
-                className="p-4"
-              >
+              <th key={column.header} className="p-4">
                 {column.header}
               </th>
             ))}
@@ -38,23 +37,22 @@ function Table<T extends Record<string, React.ReactNode>>({columns, data, classN
           {data.map((item, index) => (
             <tr
               key={index}
-              className="border-b border-gray-200 hover:bg-gray-50 ">
+              className="border-b border-gray-200 hover:bg-gray-50"
+            >
               {columns.map((column) => (
-                <td
-                 key={String(column.accessor)}
-                   className={`p-4 ${column.className || ""}`}
-                >
-                  {item[column.accessor]}
-                </td>
-              ))}
+  <td key={column.header} className={`p-4 ${column.className || ""}`}>
+    {"render" in column && column.render
+      ? column.render(item)
+      : String(item[column.accessor as keyof T] ?? "-")}
+  </td>
+))}
+             
             </tr>
           ))}
         </tbody>
-
       </table>
-
     </div>
-  )
+  );
 }
 
-export default Table
+export default Table;
