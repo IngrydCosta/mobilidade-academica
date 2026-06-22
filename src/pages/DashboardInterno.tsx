@@ -9,78 +9,10 @@ import { FiSend } from "react-icons/fi";
 import { RiUserReceived2Line } from "react-icons/ri";
 import GraficoRow from "../components/GraficoRow";
 import GraficoCol from "../components/GraficoCol";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Table, { type Column } from "../components/Table";
-import { useState } from "react";
 
-
-
-
-const columns: Column<MobilityData>[] = [
-  {
-    header: "UNIVERSIDADE",
-    accessor: "universidade",
-    className:"text-[#0E284E] font-bold",
-  },
-
-  {
-    header: "PAÍS",
-    accessor: "pais",
-    className:"text-[#404c4e]",
-  },
-
-  {
-    header: "ANO",
-    accessor: "ano",
-    className:"text-[#404c4e]",
-  },
-
-  {
-    header: "ENVIADOS",
-    accessor: "enviados",
-    className:"text-[#0E284E] font-bold"
-  },
-
-  {
-    header: "RECEBIDOS",
-    accessor: "recebidos",
-    className:"text-[#D4A969] font-bold"
-  },
-
-  {
-    header: "TOTAL",
-    accessor: "total",
-    className:"text-[#404c4e] font-bold"
-  },
-];
-
-const mobilityData = [
-  {
-    universidade: "Universidade de Lisboa",
-    pais: "Portugal",
-    ano: 2020,
-    enviados: 50,
-    recebidos: 29,
-    total: 79,
-  },
-
-  {
-    universidade: "Universidade de Coimbra",
-    pais: "Portugal",
-    ano: 2024,
-    enviados: 64,
-    recebidos: 61,
-    total: 125,
-  },
-
-  {
-    universidade: "Sorbonne Université",
-    pais: "França",
-    ano: 2023,
-    enviados: 64,
-    recebidos: 62,
-    total: 126,
-  },
-];
 
 type MobilityData = {
   universidade: string;
@@ -91,11 +23,92 @@ type MobilityData = {
   total: number;
 };
 
+
+type DashboardData = {
+  cards: {
+    total: number;
+    enviados: number;
+    recebidos: number;
+    anoTop: number;
+  };
+  grafico: Array<{
+    ano: string;
+    enviados: number;
+    recebidos: number;
+  }>;
+  table: Array<{
+    universidade: string;
+    pais: string;
+    ano: number;
+    enviados: number;
+    recebidos: number;
+    total: number;
+  }>;
+};
+
+
+
 function DashboardInterno() {
 
 const[universityFilter, setUniversityFilter] = useState("")
 const[yearFilter, setYearFilter] = useState("")
-const[countryFilter, setCountryFilter] = useState("")
+const[countryFilter, setCountryFilter] = useState("");
+const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    
+  
+      async function findDashboard() {
+       try{
+        const resposta = await axios.get("http://localhost:3333/dashboard/private", {
+          headers: {Authorization: `Bearer ${token}` },
+            params: {
+              university: universityFilter || undefined,
+              country: countryFilter || undefined,
+              year: yearFilter ? Number(yearFilter) : undefined,
+            },
+        });
+        
+
+        setDashboard(resposta.data); 
+    } catch (error) {
+      console.error("Erro ao buscar dashboard", error);
+    }
+  }
+      findDashboard();
+    }, [universityFilter, countryFilter, yearFilter]);
+
+    
+   
+const columns: Column<MobilityData>[] = [
+  {
+    header: "UNIVERSIDADE",
+    accessor: "universidade",
+  },
+  {
+    header: "PAÍS",
+    accessor: "pais",
+  },
+  {
+    header: "ANO",
+    accessor: "ano",
+  },
+  {
+    header: "ENVIADOS",
+    accessor: "enviados",
+  },
+  {
+    header: "RECEBIDOS",
+    accessor: "recebidos",
+  },
+  {
+    header: "TOTAL",
+    accessor:"total"
+  }
+];
+
 
   return (
     <div className="flex min-h-screen ">
@@ -114,30 +127,30 @@ const[countryFilter, setCountryFilter] = useState("")
         
         </section>
        <section className=" grid grid-cols-1  md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <Card title="TOTAL DE MOBILIDADES" icon={<PiStudentFill className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]"/>} number={3156} />
-          <Card title="ESTUDANTES ENVIADOS" icon={<FiSend className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={1680}/>
-          <Card title="ESTUDANTES RECEBIDOS" icon={<RiUserReceived2Line className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={1476}/>
-          <Card title="ANO COM MAIOR MOBILIDADE" icon={<PiMedal className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={2024}/> 
-        </section>
+                             <Card title="TOTAL DE MOBILIDADES" icon={<PiStudentFill className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]"/>} number={dashboard?.cards.total ?? 0} />
+                             <Card title="ESTUDANTES ENVIADOS" icon={<FiSend className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.enviados ?? 0}/>
+                             <Card title="ESTUDANTES RECEBIDOS" icon={<RiUserReceived2Line className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.recebidos ?? 0}/>
+                             <Card title="ANO COM MAIOR MOBILIDADE" icon={<PiMedal className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.anoTop ?? 0}/> 
+                           </section>
 
         <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl">
            <div>
                <Title title="Tendência de Mobilidade por Ano" size="text-2xl" className="mb-0 bg-[#FFFFFF]"/>
-                <GraficoRow />
+                <GraficoRow dashboardData={dashboard} />
             </div>
         </section>
 
         <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl bg-[#FFFFFF]">
              <div>
                 <Title title="Comparação Anual" size="text-2xl" className="mb-0"/>
-                <GraficoCol />
+                <GraficoCol dashboardData={dashboard}/>
             </div>
         </section>
 
         <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl bg-[#FFFFFF]">
           <div>
             <Title title="Registos de Mobilidade" size="text-2xl" className="mb-0" />
-            <Table columns={columns} data={mobilityData}/>
+            <Table columns={columns} data={dashboard?.table || []}/>
           </div>
         </section>
 

@@ -18,10 +18,11 @@ type MobilityData = {
 
 function CadastroMobilidade() {
 
-  const [universityId, setUniversityId] = useState("")
+  
   const [yearFilter, setYearFilter] = useState("")
   const [sentStudents, setSentStudents] = useState(0);
   const [receivedStudents, setReceivedStudents] = useState(0);
+  const [universityId, setUniversityId] = useState("");
   const [universities, setUniversities] = useState<MobilityData[]>([]);
   
  
@@ -60,35 +61,49 @@ function CadastroMobilidade() {
 
 
 async function handleSave(e?: React.SyntheticEvent) {
-    e?.preventDefault();
+  e?.preventDefault();
 
-    const ano = Number(yearFilter);
+  
+  if (!universityId) {
+    alert("Selecione uma universidade");
+    return;
+  }
 
-  if (!ano) {
+  if (!yearFilter) {
     alert("Selecione o ano");
     return;
   }
 
+  if (sentStudents === 0 && receivedStudents === 0) {
+    alert("Informe pelo menos um estudante enviado ou recebido");
+    return;
+  }
 
-   const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
+
+  try {
+    console.log("=== DADOS SENDO ENVIADOS ===");
+console.log("universityId:", universityId);
+console.log("universityId length:", universityId?.length);
 
     await axios.post("http://localhost:3333/mobility", {
-   ano: Number(yearFilter),
-  enviados: sentStudents,
-  recebidos: receivedStudents,
-  universityId,
-  },
- { headers: {
-          Authorization: `Bearer ${token}`,
-
-        },
+      ano: Number(yearFilter),
+      enviados: sentStudents,
+      recebidos: receivedStudents,
+      universityId: universityId,   
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-  
-  );
+    });
 
-  clearFilters();
+    alert("Mobilidade cadastrada com sucesso!");
+    clearFilters();
+  } catch (error) {
+    console.error("Erro ao cadastrar: ", error);
+    alert("Erro ao cadastrar mobilidade. ");
+  }
 }
-  
   return (
     <div className="flex min-h-screen ">
       <Sidebar />

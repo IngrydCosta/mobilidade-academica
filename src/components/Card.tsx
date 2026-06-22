@@ -1,5 +1,8 @@
 
 
+
+
+
 type CardProps = {
 
   icon?:React.ReactNode;
@@ -7,8 +10,8 @@ type CardProps = {
   number?:number;
   subtitle?: string;
 }
-
 function Card({icon,title,number, subtitle}: CardProps) {
+  
   return (
       <div className="w-full bg-[#FFFFFF] border border-[#404c4e]/20 shadow-md px-6 py-6 rounded-lg">
           <div className="flex items-start justify-between gap-4">
@@ -25,4 +28,5 @@ function Card({icon,title,number, subtitle}: CardProps) {
   )
 }
 
-export default Card
+export default Card;
+
