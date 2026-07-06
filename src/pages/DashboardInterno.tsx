@@ -12,16 +12,10 @@ import GraficoCol from "../components/GraficoCol";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Table, { type Column } from "../components/Table";
+import UniversityModal from "../components/UniversityModal";
 
 
-type MobilityData = {
-  universidade: string;
-  pais: string;
-  ano: number;
-  enviados: number;
-  recebidos: number;
-  total: number;
-};
+
 
 
 type DashboardData = {
@@ -36,14 +30,36 @@ type DashboardData = {
     enviados: number;
     recebidos: number;
   }>;
-  table: Array<{
+  table: MobilityData[];
+  
+  /*Array<{
     universidade: string;
     pais: string;
     ano: number;
     enviados: number;
     recebidos: number;
     total: number;
-  }>;
+  }>;*/
+};
+
+type StudentData = {
+  matricula: string;
+  nome: string;
+  email: string;
+  paisOrigem: string;
+  paisDestino: string;
+  cursoOrigem: string;
+  cursoDestino: string;
+}
+
+type MobilityData = {
+  universidade: string;
+  pais: string;
+  ano: number;
+  enviados: number;
+  recebidos: number;
+  total: number;
+  students: StudentData[];
 };
 
 
@@ -54,6 +70,15 @@ const[universityFilter, setUniversityFilter] = useState("")
 const[yearFilter, setYearFilter] = useState("")
 const[countryFilter, setCountryFilter] = useState("");
 const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedMobility, setSelectedMobility] = useState<MobilityData | null>(null);
+
+const handleUniversityClick = (mobility: MobilityData) => {
+    setSelectedMobility(mobility);
+  setIsModalOpen(true);
+};
+
 
 useEffect(() => {
     const token = localStorage.getItem("token");
@@ -86,6 +111,14 @@ const columns: Column<MobilityData>[] = [
   {
     header: "UNIVERSIDADE",
     accessor: "universidade",
+ render: (row: MobilityData) => (
+    <span
+      className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+      onClick={() => handleUniversityClick(row)}
+    >
+      {row.universidade}
+    </span>
+)
   },
   {
     header: "PAÍS",
@@ -153,6 +186,12 @@ const columns: Column<MobilityData>[] = [
             <Table columns={columns} data={dashboard?.table || []}/>
           </div>
         </section>
+
+        <UniversityModal
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  mobility={selectedMobility}
+/>
 
       </main>
     </div>
