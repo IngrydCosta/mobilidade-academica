@@ -13,19 +13,22 @@ import Button from '../components/ui/Button';
 
     const navigate = useNavigate();
 
-    async function handleLogin(e?: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(e?: React.FormEvent<HTMLFormElement>) {
     e?.preventDefault();
 
-    const response = await axios.post("http://localhost:3333/login", {
+    try {
+      const response = await axios.post("http://localhost:3333/login", {
         email: email,
         password: password,
-    });
+      });
 
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    localStorage.setItem("token", response.data.token);
-
-    navigate("/dashboard");
-
+      navigate("/dashboard");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Email ou palavra-passe incorretos.");
+    }
   }
 
 

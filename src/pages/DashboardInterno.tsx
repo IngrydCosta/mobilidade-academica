@@ -48,9 +48,12 @@ type StudentData = {
   email: string;
   paisOrigem: string;
   paisDestino: string;
+  tipoMobilidade?: string;
   cursoOrigem: string;
   cursoDestino: string;
-}
+  universidadeOrigem?: string;
+  universidadeDestino?: string;
+};
 
 type MobilityData = {
   universidade: string;
@@ -65,95 +68,92 @@ type MobilityData = {
 
 
 function DashboardInterno() {
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isGestor = user?.perfil === "GESTOR_MOBILIDADE";
 
-const[universityFilter, setUniversityFilter] = useState("")
-const[yearFilter, setYearFilter] = useState("")
-const[countryFilter, setCountryFilter] = useState("");
-const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [universityFilter, setUniversityFilter] = useState(isGestor && user?.universityId ? user.universityId : "");
+  const [yearFilter, setYearFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
 
-const [isModalOpen, setIsModalOpen] = useState(false);
-const [selectedMobility, setSelectedMobility] = useState<MobilityData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMobility, setSelectedMobility] = useState<MobilityData | null>(null);
 
-const handleUniversityClick = (mobility: MobilityData) => {
+  const handleUniversityClick = (mobility: MobilityData) => {
     setSelectedMobility(mobility);
-  setIsModalOpen(true);
-};
+    setIsModalOpen(true);
+  };
 
-
-useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
 
-    
-  
-      async function findDashboard() {
-       try{
+    async function findDashboard() {
+      try {
         const resposta = await axios.get("http://localhost:3333/dashboard/private", {
-          headers: {Authorization: `Bearer ${token}` },
-            params: {
-              university: universityFilter || undefined,
-              country: countryFilter || undefined,
-              year: yearFilter ? Number(yearFilter) : undefined,
-            },
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            university: isGestor ? user?.universityId : (universityFilter || undefined),
+            country: countryFilter || undefined,
+            year: yearFilter ? Number(yearFilter) : undefined,
+          },
         });
-        
 
-        setDashboard(resposta.data); 
-    } catch (error) {
-      console.error("Erro ao buscar dashboard", error);
+        setDashboard(resposta.data);
+      } catch (error) {
+        console.error("Erro ao buscar dashboard", error);
+      }
     }
-  }
-      findDashboard();
-    }, [universityFilter, countryFilter, yearFilter]);
 
-    
-   
-const columns: Column<MobilityData>[] = [
-  {
-    header: "UNIVERSIDADE",
-    accessor: "universidade",
- render: (row: MobilityData) => (
-    <span
-      className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
-      onClick={() => handleUniversityClick(row)}
-    >
-      {row.universidade}
-    </span>
-)
-  },
-  {
-    header: "PAÍS",
-    accessor: "pais",
-  },
-  {
-    header: "ANO",
-    accessor: "ano",
-  },
-  {
-    header: "ENVIADOS",
-    accessor: "enviados",
-  },
-  {
-    header: "RECEBIDOS",
-    accessor: "recebidos",
-  },
-  {
-    header: "TOTAL",
-    accessor:"total"
-  }
-];
+    findDashboard();
+  }, [universityFilter, countryFilter, yearFilter]);
 
+  const columns: Column<MobilityData>[] = [
+    {
+      header: "UNIVERSIDADE",
+      accessor: "universidade",
+      render: (row: MobilityData) => (
+        <span
+          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+          onClick={() => handleUniversityClick(row)}
+        >
+          {row.universidade}
+        </span>
+      ),
+    },
+    {
+      header: "PAÍS",
+      accessor: "pais",
+    },
+    {
+      header: "ANO",
+      accessor: "ano",
+    },
+    {
+      header: "ENVIADOS",
+      accessor: "enviados",
+    },
+    {
+      header: "RECEBIDOS",
+      accessor: "recebidos",
+    },
+    {
+      header: "TOTAL",
+      accessor: "total",
+    },
+  ];
 
   return (
     <div className="flex min-h-screen ">
       <Sidebar />
-      
-        <main className="flex-1 px-4 md:px-10 py-4">
-        <Title title="Dashboard de Mobilidade" subtitle="Visão geral da mobilidade estudantil"/>
+
+      <main className="flex-1 px-4 md:px-10 py-4">
+        <Title title="Dashboard de Mobilidade" subtitle="Visão geral da mobilidade estudantil" />
         <section className="p-6  bg-[#FFFFFF] border border-gray-300 rounded-lg">
           <h1 className="text-[#0E284E] text-2xl font-medium flex flex-col md:flex-row gap-4 items-end">Filtros</h1>
 
           <div className="flex flex-col md:flex-row gap-4 items-end">
-        <UniversityFilter value={universityFilter} onChange={setUniversityFilter}/>
+            <UniversityFilter value={universityFilter} onChange={setUniversityFilter} disabled={isGestor} />
         <CountryFilter value={countryFilter} onChange={setCountryFilter} />
         <YearFilter value={yearFilter} onChange={setYearFilter} />
           </div>

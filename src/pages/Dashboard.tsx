@@ -43,19 +43,17 @@ useEffect(() => {
     const token = localStorage.getItem("token");
   
       async function findDashboard() {
-       try{
-        const resposta = await axios.get("http://localhost:3333/dashboard/public", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-          console.log('api', resposta.data);
-
-        setDashboard(resposta.data); 
-    } catch (error) {
-      console.error("Erro ao buscar dashboard", error);
-    }
-  }
+        try {
+          const resposta = await axios.get("http://localhost:3333/dashboard/public", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          setDashboard(resposta.data); 
+        } catch (error) {
+          console.error("Erro ao buscar dashboard", error);
+        }
+      }
       findDashboard();
     }, []);
 

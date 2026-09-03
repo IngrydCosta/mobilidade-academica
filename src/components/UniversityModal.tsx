@@ -6,8 +6,11 @@ type StudentData = {
   email: string;
   paisOrigem: string;
   paisDestino: string;
+  tipoMobilidade?: string;
   cursoOrigem: string;
   cursoDestino: string;
+  universidadeOrigem?: string;
+  universidadeDestino?: string;
 };
 
 type MobilityData = {
@@ -39,7 +42,7 @@ export default function UniversityModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center border-b px-6 py-4 bg-[#0E284E] text-white rounded-t-2xl">
           <div>
             <h2 className="text-xl font-bold">{mobility.universidade}</h2>
@@ -105,10 +108,11 @@ export default function UniversityModal({
                   <th className="p-3">Matrícula</th>
                   <th className="p-3">Nome</th>
                   <th className="p-3">Email</th>
+                  <th className="p-3">Tipo</th>
                   <th className="p-3">Origem</th>
                   <th className="p-3">Destino</th>
-                  <th className="p-3">Curso origem</th>
-                  <th className="p-3">Curso destino</th>
+                  <th className="p-3">Curso Origem</th>
+                  <th className="p-3">Curso Destino</th>
                 </tr>
               </thead>
 
@@ -118,7 +122,7 @@ export default function UniversityModal({
                       key={`${student.matricula}-${index}`}
                       className="border-b border-gray-200 hover:bg-gray-50"
                     >
-                      <td className="p-3">
+                      <td className="p-3 font-medium">
                         {student.matricula || "-"}
                       </td>
 
@@ -131,11 +135,29 @@ export default function UniversityModal({
                       </td>
 
                       <td className="p-3">
-                        {student.paisOrigem || "-"}
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            (student.tipoMobilidade || "").toUpperCase() === "RECEBIDO"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {student.tipoMobilidade || "ENVIADO"}
+                        </span>
                       </td>
 
                       <td className="p-3">
-                        {student.paisDestino || "-"}
+                        <div>{student.paisOrigem || "-"}</div>
+                        {student.universidadeOrigem && (
+                          <div className="text-xs text-gray-500">{student.universidadeOrigem}</div>
+                        )}
+                      </td>
+
+                      <td className="p-3">
+                        <div>{student.paisDestino || "-"}</div>
+                        {student.universidadeDestino && (
+                          <div className="text-xs text-gray-500">{student.universidadeDestino}</div>
+                        )}
                       </td>
 
                       <td className="p-3">
