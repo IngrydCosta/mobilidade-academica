@@ -34,7 +34,6 @@ type GraficoRowProps = {
 };
 
 function GraficoRow({ dashboardData }: GraficoRowProps) {
-  // Filtra ano "0" e ordena
   const rawData = dashboardData?.grafico || [];
 
   const data = rawData

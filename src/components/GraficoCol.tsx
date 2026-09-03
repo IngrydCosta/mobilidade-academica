@@ -24,7 +24,6 @@ type GraficoColProps = {
 };
 
 function GraficoCol({ dashboardData }: GraficoColProps) {
-  // Filtra ano "0" e ordena por ano
   const rawData = dashboardData?.grafico || [];
 
   const data = rawData

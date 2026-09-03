@@ -21,44 +21,62 @@ function CadastroUniversidades() {
 
   
 
-  useEffect(() => {
+  async function fetchUniversities() {
     const token = localStorage.getItem("token");
-
-    
-    async function findUniversity() {
+    try {
       const resposta = await axios.get("http://localhost:3333/university", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       setUniversity(resposta.data);
+    } catch (error) {
+      console.error("Erro ao buscar universidades", error);
     }
-    findUniversity();
+  }
+
+  useEffect(() => {
+    fetchUniversities();
   }, []);
 
   async function handleSave(e?: React.SyntheticEvent) {
     e?.preventDefault();
 
-     const token = localStorage.getItem("token");
-      console.log("TOKEN: ", token)
+    if (!name.trim()) {
+      alert("Informe o nome da universidade.");
+      return;
+    }
 
-    await axios.post("http://localhost:3333/university", {
-      icon: icon,
-      nome: name,
-      pais: country,
-    },
-  {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    if (!country || country === "Selecione") {
+      alert("Selecione um país.");
+      return;
+    }
 
+    const token = localStorage.getItem("token");
+
+    try {
+      await axios.post(
+        "http://localhost:3333/university",
+        {
+          icon: icon,
+          nome: name,
+          pais: country,
         },
-      }
-  );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setIcon("");
-    setName("");
-    setCountry("");
+      alert("Universidade cadastrada com sucesso!");
+      setIcon("");
+      setName("");
+      setCountry("");
+      fetchUniversities();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erro ao cadastrar universidade.");
+    }
   }
 
   return (

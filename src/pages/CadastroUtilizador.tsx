@@ -30,45 +30,66 @@ function CadastroUtilizador() {
   const [universityId, setUniversityId] = useState<string>("");
 
   
-    useEffect(() => {
+  async function fetchUsers() {
     const token = localStorage.getItem("token");
-  
-      async function findUser() {
-        const resposta = await axios.get("http://localhost:3333/user", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUsers(resposta.data);
-      }
-      findUser();
-    }, []);
+    try {
+      const resposta = await axios.get("http://localhost:3333/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(resposta.data);
+    } catch (error) {
+      console.error("Erro ao carregar utilizadores", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   async function handleSave(e?: React.SyntheticEvent) {
     e?.preventDefault();
 
+    if (!name || !email || !password || !perfil || perfil === "Selecione") {
+      alert("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (perfil === "GESTOR_MOBILIDADE" && !universityId) {
+      alert("Para o perfil de Gestor de Mobilidade, a universidade é obrigatória.");
+      return;
+    }
+
     const token = localStorage.getItem("token");
 
-    await axios.post("http://localhost:3333/user", {
-      nome: name,
-      email: email,
-      password: password,
-      perfil: perfil,
-      universityId: universityId,
-    },
-    
-  {
-     headers: {
-          Authorization: `Bearer ${token}`,
-
+    try {
+      await axios.post(
+        "http://localhost:3333/user",
+        {
+          nome: name,
+          email: email,
+          password: password,
+          perfil: perfil,
+          universityId: universityId,
         },
-      }
-  );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setName("");
-    setEmail("");
-    setPassword("");
-    setProfile("");
+      alert("Utilizador criado com sucesso!");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setProfile("");
+      setUniversityId("");
+      fetchUsers();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erro ao criar utilizador.");
+    }
   }
 
   const columns: Column<UserData>[] = [
