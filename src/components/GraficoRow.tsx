@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 type GraficoDataPoint = {
   ano: string;
@@ -34,6 +35,7 @@ type GraficoRowProps = {
 };
 
 function GraficoRow({ dashboardData }: GraficoRowProps) {
+  const { t } = useTranslation();
   const rawData = dashboardData?.grafico || [];
 
   const data = rawData
@@ -70,7 +72,7 @@ function GraficoRow({ dashboardData }: GraficoRowProps) {
             dataKey="enviados"
             stroke="#173764"
             strokeWidth={3}
-            name="Estudantes Enviados"
+            name={t("card2", "Estudantes Enviados")}
             dot={{ r: 4 }}
             activeDot={{ r: 6 }}
           />
@@ -80,7 +82,7 @@ function GraficoRow({ dashboardData }: GraficoRowProps) {
             dataKey="recebidos"
             stroke="#D9A95E"
             strokeWidth={3}
-            name="Estudantes Recebidos"
+            name={t("card3", "Estudantes Recebidos")}
             dot={{ r: 4 }}
             activeDot={{ r: 6 }}
           />

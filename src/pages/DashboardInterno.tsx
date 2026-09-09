@@ -32,14 +32,6 @@ type DashboardData = {
   }>;
   table: MobilityData[];
   
-  /*Array<{
-    universidade: string;
-    pais: string;
-    ano: number;
-    enviados: number;
-    recebidos: number;
-    total: number;
-  }>;*/
 };
 
 type StudentData = {
@@ -106,7 +98,7 @@ function DashboardInterno() {
     }
 
     findDashboard();
-  }, [universityFilter, countryFilter, yearFilter]);
+  }, [universityFilter, countryFilter, yearFilter, isGestor, user?.universityId]);
 
   const columns: Column<MobilityData>[] = [
     {
@@ -147,52 +139,46 @@ function DashboardInterno() {
     <div className="flex min-h-screen ">
       <Sidebar />
 
-      <main className="flex-1 px-4 md:px-10 py-4">
+      <main className="flex-1 px-4 md:px-10 py-6 flex flex-col gap-6">
         <Title title="Dashboard de Mobilidade" subtitle="Visão geral da mobilidade estudantil" />
-        <section className="p-6  bg-[#FFFFFF] border border-gray-300 rounded-lg">
-          <h1 className="text-[#0E284E] text-2xl font-medium flex flex-col md:flex-row gap-4 items-end">Filtros</h1>
 
-          <div className="flex flex-col md:flex-row gap-4 items-end">
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+          <h2 className="text-[#0E284E] text-xl font-medium">Filtros</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <UniversityFilter value={universityFilter} onChange={setUniversityFilter} disabled={isGestor} />
-        <CountryFilter value={countryFilter} onChange={setCountryFilter} />
-        <YearFilter value={yearFilter} onChange={setYearFilter} />
+            <CountryFilter value={countryFilter} onChange={setCountryFilter} />
+            <YearFilter value={yearFilter} onChange={setYearFilter} />
           </div>
-        
-        </section>
-       <section className=" grid grid-cols-1  md:grid-cols-2 xl:grid-cols-4 gap-4">
-                             <Card title="TOTAL DE MOBILIDADES" icon={<PiStudentFill className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]"/>} number={dashboard?.cards.total ?? 0} />
-                             <Card title="ESTUDANTES ENVIADOS" icon={<FiSend className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.enviados ?? 0}/>
-                             <Card title="ESTUDANTES RECEBIDOS" icon={<RiUserReceived2Line className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.recebidos ?? 0}/>
-                             <Card title="ANO COM MAIOR MOBILIDADE" icon={<PiMedal className=" h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.anoTop ?? 0}/> 
-                           </section>
-
-        <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl">
-           <div>
-               <Title title="Tendência de Mobilidade por Ano" size="text-2xl" className="mb-0 bg-[#FFFFFF]"/>
-                <GraficoRow dashboardData={dashboard} />
-            </div>
         </section>
 
-        <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl bg-[#FFFFFF]">
-             <div>
-                <Title title="Comparação Anual" size="text-2xl" className="mb-0"/>
-                <GraficoCol dashboardData={dashboard}/>
-            </div>
+        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card title="TOTAL DE MOBILIDADES" icon={<PiStudentFill className="h-6 w-6 md:h-7 md:w-7 text-[#0E284E]"/>} number={dashboard?.cards.total ?? 0} />
+          <Card title="ESTUDANTES ENVIADOS" icon={<FiSend className="h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.enviados ?? 0}/>
+          <Card title="ESTUDANTES RECEBIDOS" icon={<RiUserReceived2Line className="h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.recebidos ?? 0}/>
+          <Card title="ANO COM MAIOR MOBILIDADE" icon={<PiMedal className="h-6 w-6 md:h-7 md:w-7 text-[#0E284E]" />} number={dashboard?.cards.anoTop ?? 0}/> 
         </section>
 
-        <section className="flex flex-col border border-gray-300 rounded-lg shadow-2xl bg-[#FFFFFF]">
-          <div>
-            <Title title="Registos de Mobilidade" size="text-2xl" className="mb-0" />
-            <Table columns={columns} data={dashboard?.table || []}/>
-          </div>
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+          <Title title="Tendência de Mobilidade por Ano" size="text-2xl" className="mb-0"/>
+          <GraficoRow dashboardData={dashboard} />
+        </section>
+
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+          <Title title="Comparação Anual" size="text-2xl" className="mb-0"/>
+          <GraficoCol dashboardData={dashboard}/>
+        </section>
+
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+          <Title title="Registos de Mobilidade" size="text-2xl" className="mb-0" />
+          <Table columns={columns} data={dashboard?.table || []}/>
         </section>
 
         <UniversityModal
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  mobility={selectedMobility}
-/>
-
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          mobility={selectedMobility}
+        />
       </main>
     </div>
   )
