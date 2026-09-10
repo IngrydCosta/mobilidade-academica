@@ -64,24 +64,43 @@ useEffect(() => {
 
     
   return (
-    <div className="flex min-h-screen ">
-        <Sidebar />
+    <div className="flex min-h-screen">
+      <Sidebar />
 
-        <main className="flex flex-col gap-4 p-4">
-        <Title  title="Ranking do Estudante" subtitle="Descubra as universidades e países com mais mobilidade"/>
-        <div className="bg-[#FFFFFF] border border-gray-300 gap-4 rounded-xl  items-center p-5">
-            <YearFilter value={yearFilter} onChange={setYearFilter} label={"Ano de referência"}/>
+      <main className="flex-1 px-4 md:px-10 py-6 flex flex-col gap-6">
+        <Title
+          title="Ranking do Estudante"
+          subtitle="Descubra as universidades e países com mais mobilidade"
+        />
 
-            <div>
-                <Table columns={columnsUniversity} data={universityRanking}/>
-            </div>
-             <div>
-                <Table columns={columnsCountry} data={countryRanking}/>
-            </div>
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm">
+          <div className="max-w-xs">
+            <YearFilter
+              value={yearFilter}
+              onChange={setYearFilter}
+              label="Ano de referência"
+            />
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+            <h2 className="text-[#0E284E] text-xl font-medium">
+              Ranking por Universidade
+            </h2>
+            <Table columns={columnsUniversity} data={universityRanking} />
+          </section>
+
+          <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
+            <h2 className="text-[#0E284E] text-xl font-medium">
+              Ranking por País
+            </h2>
+            <Table columns={columnsCountry} data={countryRanking} />
+          </section>
         </div>
-        </main>
-        </div>
-  )
+      </main>
+    </div>
+  );
 }
 
 export default Rankings

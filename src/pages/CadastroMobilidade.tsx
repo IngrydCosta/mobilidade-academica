@@ -18,6 +18,14 @@ type MobilityData = {
   pais: string;
 };
 
+type User = {
+  id?: string;
+  nome?: string;
+  email?: string;
+  perfil?: string;
+  universityId?: string;
+};
+
 type StudentFromSheet = {
   matricula: string;
   nome: string;
@@ -56,7 +64,7 @@ const download = "/arquivos/modelo-mobilidade.xlsx";
 
 function CadastroMobilidade() {
   const userStr = localStorage.getItem("user");
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user: User | null = userStr ? (JSON.parse(userStr) as User) : null;
   const isGestor = user?.perfil === "GESTOR_MOBILIDADE";
 
   const [yearFilter, setYearFilter] = useState("");
@@ -78,7 +86,7 @@ function CadastroMobilidade() {
 
     async function loadUniversities() {
       try {
-        const resposta = await axios.get("http://localhost:3333/university", {
+        const resposta = await axios.get<MobilityData[]>("http://localhost:3333/university", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUniversities(resposta.data);
@@ -88,10 +96,6 @@ function CadastroMobilidade() {
     }
 
     loadUniversities();
-
-    if (isGestor && user?.universityId) {
-      setUniversityId(user.universityId);
-    }
   }, []);
 
   const targetUnivId = isGestor ? user?.universityId : universityId;
@@ -352,9 +356,13 @@ function CadastroMobilidade() {
 
       alert("Mobilidade cadastrada com sucesso e planilha importada!");
       clearFilters();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao cadastrar mobilidade:", error);
-      alert(error.response?.data?.message || "Erro ao cadastrar mobilidade.");
+      if (axios.isAxiosError(error)) {
+        alert(error.response?.data?.message || "Erro ao cadastrar mobilidade.");
+      } else {
+        alert("Erro ao cadastrar mobilidade.");
+      }
     } finally {
       setIsSaving(false);
     }
