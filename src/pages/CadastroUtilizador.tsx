@@ -30,7 +30,6 @@ function CadastroUtilizador() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
   const [editProfile, setEditProfile] = useState<string>("");
   const [editUniversityId, setEditUniversityId] = useState("");
 
@@ -78,7 +77,7 @@ function CadastroUtilizador() {
           nome: name,
           email: email,
           perfil: perfil,
-          universityId: universityId || undefined,
+          universityId: (perfil === "GESTOR_MOBILIDADE" || perfil === "ESTUDANTE") ? (universityId || undefined) : undefined,
         },
         getHeaders()
       );
@@ -105,9 +104,8 @@ function CadastroUtilizador() {
         {
           nome: editName,
           email: editEmail,
-          password: editPassword.trim() !== "" ? editPassword : undefined,
           perfil: editProfile,
-          universityId: editProfile === "GESTOR_MOBILIDADE" ? editUniversityId : undefined,
+          universityId: (editProfile === "GESTOR_MOBILIDADE" || editProfile === "ESTUDANTE") ? editUniversityId : undefined,
         },
         getHeaders()
       );
@@ -138,7 +136,6 @@ function CadastroUtilizador() {
     setEditingUser(user);
     setEditName(user.nome);
     setEditEmail(user.email);
-    setEditPassword("");
     setEditProfile(user.perfil);
     setEditUniversityId(user.universityId || "");
   }
@@ -204,8 +201,6 @@ function CadastroUtilizador() {
                   onChange={(e) => setEmail(e.target.value)}
                 />
 
-                <UniversityFilter value={universityId} onChange={setUniversityId} />
-
                 <div className="flex flex-col w-full">
                   <label htmlFor="perfil" className="text-[#404c4e] font-medium text-md mb-1">Perfil</label>
                   <div className="w-full bg-[#F8FAFC] border border-gray-300 rounded-md p-2 mb-4">
@@ -222,8 +217,13 @@ function CadastroUtilizador() {
                       <option value="ADMINISTRADOR">Administrador</option>
                     </select>
                   </div>
-                  <SaveButton onClick={handleSave} nameButton="Guardar Utilizador" />
                 </div>
+
+                {(perfil === "GESTOR_MOBILIDADE" || perfil === "ESTUDANTE") && (
+                  <UniversityFilter value={universityId} onChange={setUniversityId} />
+                )}
+
+                <SaveButton onClick={handleSave} nameButton="Guardar Utilizador" />
               </form>
             </div>
           </section>
@@ -386,19 +386,11 @@ function CadastroUtilizador() {
                   </div>
                 </div>
 
-                {editProfile === "GESTOR_MOBILIDADE" && (
+                {(editProfile === "GESTOR_MOBILIDADE" || editProfile === "ESTUDANTE") && (
                   <div>
                     <UniversityFilter value={editUniversityId} onChange={setEditUniversityId} />
                   </div>
                 )}
-
-                <Input
-                  label="Redefinir Palavra-passe (Opcional)"
-                  type="password"
-                  placeholder="Deixe em branco para manter a atual"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                />
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
