@@ -8,28 +8,31 @@ import CadastroUniversidades from './pages/CadastroUniversidades';
 import Introducao from './pages/Introducao';
 import Rankings from './pages/Rankings';
 import PrivateRoute from './components/PrivateRoute';
+import { ToastProvider } from './context/ToastContext';
 
 function App() {
   return (
-    <Routes>
-      <Route path='/' element={<Dashboard />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/introducao' element={<Introducao />} />
-      <Route path='/rankings' element={<Rankings />} />
+    <ToastProvider>
+      <Routes>
+        <Route path='/' element={<Dashboard />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/introducao' element={<Introducao />} />
+        <Route path='/rankings' element={<Rankings />} />
 
-      <Route element={<PrivateRoute />}>
-        <Route path='/dashboard' element={<DashboardInterno />} />
-      </Route>
+        <Route element={<PrivateRoute />}>
+          <Route path='/dashboard' element={<DashboardInterno />} />
+        </Route>
 
-      <Route element={<PrivateRoute allowedRoles={['ADMINISTRADOR', 'GESTOR_MOBILIDADE']} />}>
-        <Route path='/registarMobilidade' element={<CadastroMobilidade />} />
-      </Route>
+        <Route element={<PrivateRoute allowedRoles={['ADMINISTRADOR', 'GESTOR_MOBILIDADE']} />}>
+          <Route path='/registarMobilidade' element={<CadastroMobilidade />} />
+        </Route>
 
-      <Route element={<PrivateRoute allowedRoles={['ADMINISTRADOR']} />}>
-        <Route path='/cadastroUtilizador' element={<CadastroUtilizador />} />
-        <Route path='/cadastroUniversidade' element={<CadastroUniversidades />} />
-      </Route>
-    </Routes>
+        <Route element={<PrivateRoute allowedRoles={['ADMINISTRADOR']} />}>
+          <Route path='/cadastroUtilizador' element={<CadastroUtilizador />} />
+          <Route path='/cadastroUniversidade' element={<CadastroUniversidades />} />
+        </Route>
+      </Routes>
+    </ToastProvider>
   );
 }
 

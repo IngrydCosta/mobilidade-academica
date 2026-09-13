@@ -7,6 +7,7 @@ import axios from "axios";
 import SaveButton from "../components/ui/SaveButton";
 import Button from "../components/ui/Button";
 import { FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
+import { useToast } from "../context/ToastContext";
 
 type UserData = {
   id: string;
@@ -21,6 +22,7 @@ type UserData = {
 };
 
 function CadastroUtilizador() {
+  const { showToast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [perfil, setProfile] = useState("");
@@ -61,12 +63,12 @@ function CadastroUtilizador() {
     e?.preventDefault();
 
     if (!name || !email || !perfil || perfil === "Selecione") {
-      alert("Preencha todos os campos obrigatórios (Nome, E-mail e Perfil).");
+      showToast("Preencha todos os campos obrigatórios (Nome, E-mail e Perfil).", "warning");
       return;
     }
 
     if (perfil === "GESTOR_MOBILIDADE" && !universityId) {
-      alert("Para o perfil de Gestor de Mobilidade, a universidade é obrigatória.");
+      showToast("Para o perfil de Gestor de Mobilidade, a universidade é obrigatória.", "warning");
       return;
     }
 
@@ -82,7 +84,7 @@ function CadastroUtilizador() {
         getHeaders()
       );
 
-      alert("Utilizador criado com sucesso! Uma palavra-passe aleatória foi gerada automaticamente e enviada para o e-mail do utilizador.");
+      showToast("Utilizador criado com sucesso! Uma palavra-passe aleatória foi gerada automaticamente e enviada para o e-mail do utilizador.", "success");
 
       setName("");
       setEmail("");
@@ -90,7 +92,7 @@ function CadastroUtilizador() {
       setUniversityId("");
       fetchUsers();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Erro ao criar utilizador.");
+      showToast(error.response?.data?.message || "Erro ao criar utilizador.", "error");
     }
   }
 
@@ -110,12 +112,12 @@ function CadastroUtilizador() {
         getHeaders()
       );
 
-      alert("Utilizador atualizado com sucesso!");
+      showToast("Utilizador atualizado com sucesso!", "success");
 
       setEditingUser(null);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao atualizar utilizador.");
+      showToast(err.response?.data?.message || "Erro ao atualizar utilizador.", "error");
     }
   }
 
@@ -124,11 +126,11 @@ function CadastroUtilizador() {
 
     try {
       await axios.delete(`http://localhost:3333/user/${deletingUser.id}`, getHeaders());
-      alert("Utilizador excluído com sucesso!");
+      showToast("Utilizador excluído com sucesso!", "success");
       setDeletingUser(null);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao excluir utilizador.");
+      showToast(err.response?.data?.message || "Erro ao excluir utilizador.", "error");
     }
   }
 

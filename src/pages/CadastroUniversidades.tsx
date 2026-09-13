@@ -6,6 +6,7 @@ import SaveButton from "../components/ui/SaveButton";
 import Button from "../components/ui/Button";
 import { FiEdit2, FiSearch } from "react-icons/fi";
 import axios from "axios";
+import { useToast } from "../context/ToastContext";
 
 type UniversityData = {
   id: string;
@@ -15,6 +16,7 @@ type UniversityData = {
 };
 
 function CadastroUniversidades() {
+  const { showToast } = useToast();
   const [name, setName] = useState("");
   const [country, setCountry] = useState("Selecione");
   const [university, setUniversity] = useState<UniversityData[]>([]);
@@ -49,12 +51,12 @@ function CadastroUniversidades() {
     e?.preventDefault();
 
     if (!name.trim()) {
-      alert("Informe o nome da universidade.");
+      showToast("Informe o nome da universidade.", "warning");
       return;
     }
 
     if (!country || country === "Selecione") {
-      alert("Selecione um país.");
+      showToast("Selecione um país.", "warning");
       return;
     }
 
@@ -68,12 +70,12 @@ function CadastroUniversidades() {
         getHeaders()
       );
 
-      alert("Universidade cadastrada com sucesso!");
+      showToast("Universidade cadastrada com sucesso!", "success");
       setName("");
       setCountry("Selecione");
       fetchUniversities();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Erro ao cadastrar universidade.");
+      showToast(error.response?.data?.message || "Erro ao cadastrar universidade.", "error");
     }
   }
 
@@ -91,11 +93,11 @@ function CadastroUniversidades() {
         getHeaders()
       );
 
-      alert("Universidade atualizada com sucesso!");
+      showToast("Universidade atualizada com sucesso!", "success");
       setEditingUniversity(null);
       fetchUniversities();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao atualizar universidade.");
+      showToast(err.response?.data?.message || "Erro ao atualizar universidade.", "error");
     }
   }
 

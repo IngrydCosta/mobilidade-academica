@@ -3,9 +3,7 @@ import{ useState} from 'react';
 import Input from '../components/ui/Input';
 import axios from "axios";
 import Button from '../components/ui/Button';
-
-
-
+import { useToast } from '../context/ToastContext';
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -17,6 +15,7 @@ function Login() {
   const [forgotMsg, setForgotMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   async function handleLogin(e?: React.FormEvent<HTMLFormElement>) {
     e?.preventDefault();
@@ -35,9 +34,9 @@ function Login() {
       navigate("/dashboard");
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        alert(error.response?.data?.message || "Email ou palavra-passe incorretos.");
+        showToast(error.response?.data?.message || "Email ou palavra-passe incorretos.", "error");
       }   else {
-        alert("Erro ao realizar login.");
+        showToast("Erro ao realizar login.", "error");
       }
     }
   }

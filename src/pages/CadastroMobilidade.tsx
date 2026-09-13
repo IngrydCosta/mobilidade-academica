@@ -13,6 +13,7 @@ import { BsDownload } from "react-icons/bs";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
 import * as XLSX from "xlsx";
+import { useToast } from "../context/ToastContext";
 
 type MobilityData = {
   id: string;
@@ -81,6 +82,7 @@ function normalize(str: string): string {
 const download = "/arquivos/modelo-mobilidade.xlsx";
 
 function CadastroMobilidade() {
+  const { showToast } = useToast();
   const userStr = localStorage.getItem("user") || localStorage.getItem("@mobilidade:user");
   const user: User | null = userStr ? (JSON.parse(userStr) as User) : null;
   const isGestor = user?.perfil === "GESTOR_MOBILIDADE";
@@ -173,7 +175,7 @@ function CadastroMobilidade() {
     if (!selectedFile) return;
 
     if (!selectedUniversity || !selectedUniversity.pais) {
-      alert("Por favor, selecione a universidade antes de importar a planilha.");
+      showToast("Por favor, selecione a universidade antes de importar a planilha.", "warning");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -188,14 +190,14 @@ function CadastroMobilidade() {
         const worksheet = workbook.Sheets[sheetName];
 
         if (!worksheet) {
-          alert("A planilha selecionada está vazia.");
+          showToast("A planilha selecionada está vazia.", "warning");
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
 
         const headerRows = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1 });
         if (!headerRows || headerRows.length === 0) {
-          alert("A planilha não possui dados ou cabeçalho.");
+          showToast("A planilha não possui dados ou cabeçalho.", "warning");
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
@@ -208,10 +210,9 @@ function CadastroMobilidade() {
         );
 
         if (missingHeaders.length > 0) {
-          alert(
-            `A planilha está fora do formato esperado.\nColunas obrigatórias ausentes:\n- ${missingHeaders.join(
-              "\n- "
-            )}`
+          showToast(
+            `A planilha está fora do formato esperado. Colunas ausentes: ${missingHeaders.join(", ")}`,
+            "error"
           );
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
@@ -231,7 +232,7 @@ function CadastroMobilidade() {
         );
 
         if (rows.length === 0) {
-          alert("Nenhuma linha de estudante encontrada na planilha.");
+          showToast("Nenhuma linha de estudante encontrada na planilha.", "warning");
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
@@ -256,17 +257,17 @@ function CadastroMobilidade() {
           const universidadeDestino = String(row[colIndices["UNIVERSIDADE DE DESTINO"]] ?? "").trim();
 
           if (!matricula) {
-            alert(`Erro na linha ${lineNum}: O campo "Nº DE MATRÍCULA DO ESTUDANTE" é obrigatório.`);
+            showToast(`Erro na linha ${lineNum}: O campo "Nº DE MATRÍCULA DO ESTUDANTE" é obrigatório.`, "error");
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
           if (!nome) {
-            alert(`Erro na linha ${lineNum}: O campo "NOME DO ESTUDANTE" é obrigatório.`);
+            showToast(`Erro na linha ${lineNum}: O campo "NOME DO ESTUDANTE" é obrigatório.`, "error");
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
           if (!email) {
-            alert(`Erro na linha ${lineNum}: O campo "EMAIL DO ESTUDANTE" é obrigatório.`);
+            showToast(`Erro na linha ${lineNum}: O campo "EMAIL DO ESTUDANTE" é obrigatório.`, "error");
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
@@ -304,7 +305,7 @@ function CadastroMobilidade() {
         setFile(selectedFile);
       } catch (err) {
         console.error("Erro ao ler planilha:", err);
-        alert("Erro ao processar o ficheiro da planilha. Verifique se o formato está correto.");
+        showToast("Erro ao processar o ficheiro da planilha. Verifique se o formato está correto.", "error");
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     };
@@ -318,17 +319,17 @@ function CadastroMobilidade() {
     const currentUnivId = isGestor ? user?.universityId : universityId;
 
     if (!currentUnivId) {
-      alert("Selecione uma universidade.");
+      showToast("Selecione uma universidade.", "warning");
       return;
     }
 
     if (!yearFilter) {
-      alert("Selecione o ano.");
+      showToast("Selecione o ano.", "warning");
       return;
     }
 
     if (!semesterFilter) {
-      alert("Selecione o semestre.");
+      showToast("Selecione o semestre.", "warning");
       return;
     }
 
@@ -348,15 +349,15 @@ function CadastroMobilidade() {
         getHeaders()
       );
 
-      alert("Mobilidade cadastrada com sucesso!");
+      showToast("Mobilidade cadastrada com sucesso!", "success");
       clearFilters();
       fetchMobilities();
     } catch (error: unknown) {
       console.error("Erro ao cadastrar mobilidade:", error);
       if (axios.isAxiosError(error)) {
-        alert(error.response?.data?.message || "Erro ao cadastrar mobilidade.");
+        showToast(error.response?.data?.message || "Erro ao cadastrar mobilidade.", "error");
       } else {
-        alert("Erro ao cadastrar mobilidade.");
+        showToast("Erro ao cadastrar mobilidade.", "error");
       }
     } finally {
       setIsSaving(false);
@@ -379,11 +380,11 @@ function CadastroMobilidade() {
         getHeaders()
       );
 
-      alert("Registo de mobilidade atualizado com sucesso!");
+      showToast("Registo de mobilidade atualizado com sucesso!", "success");
       setEditingMobility(null);
       fetchMobilities();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao atualizar registo de mobilidade.");
+      showToast(err.response?.data?.message || "Erro ao atualizar registo de mobilidade.", "error");
     }
   }
 
@@ -392,11 +393,11 @@ function CadastroMobilidade() {
 
     try {
       await axios.delete(`http://localhost:3333/mobility/${deletingMobility.id}`, getHeaders());
-      alert("Registo de mobilidade excluído com sucesso!");
+      showToast("Registo de mobilidade excluído com sucesso!", "success");
       setDeletingMobility(null);
       fetchMobilities();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Erro ao excluir registo de mobilidade.");
+      showToast(err.response?.data?.message || "Erro ao excluir registo de mobilidade.", "error");
     }
   }
 
