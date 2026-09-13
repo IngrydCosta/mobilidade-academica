@@ -135,15 +135,7 @@ export default function UniversityModal({
                       </td>
 
                       <td className="p-3">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            (student.tipoMobilidade || "").toUpperCase() === "RECEBIDO"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {student.tipoMobilidade || "ENVIADO"}
-                        </span>
+                        {student.tipoMobilidade}
                       </td>
 
                       <td className="p-3">

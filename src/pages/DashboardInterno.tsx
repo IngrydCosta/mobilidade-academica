@@ -4,8 +4,9 @@ import UniversityFilter from "../components/filters/UniversityFilter";
 import YearFilter from "../components/filters/YearFilter";
 import Sidebar from "../components/Sidebar";
 import Title from "../components/ui/Title";
+import Button from "../components/ui/Button";
 import { PiMedal, PiStudentFill } from "react-icons/pi";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiSearch } from "react-icons/fi";
 import { RiUserReceived2Line } from "react-icons/ri";
 import GraficoRow from "../components/GraficoRow";
 import GraficoCol from "../components/GraficoCol";
@@ -13,10 +14,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Table, { type Column } from "../components/Table";
 import UniversityModal from "../components/UniversityModal";
-
-
-
-
 
 type DashboardData = {
   cards: {
@@ -57,8 +54,6 @@ type MobilityData = {
   students: StudentData[];
 };
 
-
-
 function DashboardInterno() {
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
@@ -68,6 +63,10 @@ function DashboardInterno() {
   const [yearFilter, setYearFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMobility, setSelectedMobility] = useState<MobilityData | null>(null);
@@ -92,6 +91,7 @@ function DashboardInterno() {
         });
 
         setDashboard(resposta.data);
+        setCurrentPage(1);
       } catch (error) {
         console.error("Erro ao buscar dashboard", error);
       }
@@ -135,6 +135,21 @@ function DashboardInterno() {
     },
   ];
 
+  const tableData = dashboard?.table || [];
+  const filteredTableData = tableData.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    const uniName = (item.universidade || "").toLowerCase();
+    const countryName = (item.pais || "").toLowerCase();
+    const yearStr = String(item.ano);
+    return uniName.includes(term) || countryName.includes(term) || yearStr.includes(term);
+  });
+
+  const totalPages = Math.ceil(filteredTableData.length / itemsPerPage) || 1;
+  const paginatedTableData = filteredTableData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="flex min-h-screen ">
       <Sidebar />
@@ -169,9 +184,48 @@ function DashboardInterno() {
           <GraficoCol dashboardData={dashboard}/>
         </section>
 
-        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
-          <Title title="Registos de Mobilidade" size="text-2xl" className="mb-0" />
-          <Table columns={columns} data={dashboard?.table || []}/>
+        <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col justify-between min-h-[560px]">
+          <div>
+            <Title title="Registos de Mobilidade" size="text-2xl" className="mb-4" />
+
+            <div className="relative mb-4 max-w-md">
+              <input
+                type="text"
+                placeholder="Pesquisar por universidade, país ou ano..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full bg-[#F8FAFC] border border-gray-300 rounded-md pl-9 pr-3 py-2 text-sm text-gray-700 outline-none"
+              />
+              <FiSearch className="absolute left-3 top-3 text-gray-400" size={16} />
+            </div>
+
+            <Table columns={columns} data={paginatedTableData} itemsPerPage={itemsPerPage} />
+          </div>
+
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 text-sm text-gray-600">
+            <span>
+              Página {currentPage} de {totalPages} ({filteredTableData.length} registos)
+            </span>
+            <div className="flex gap-2">
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                className="!w-auto px-4 py-2 text-sm"
+              >
+                Anterior
+              </Button>
+              <Button
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                className="!w-auto px-4 py-2 text-sm"
+              >
+                Próximo
+              </Button>
+            </div>
+          </div>
         </section>
 
         <UniversityModal
@@ -181,7 +235,7 @@ function DashboardInterno() {
         />
       </main>
     </div>
-  )
+  );
 }
 
 export default DashboardInterno

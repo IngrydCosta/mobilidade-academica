@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import UniversityFilter from "../components/filters/UniversityFilter";
 import YearFilter from "../components/filters/YearFilter";
 import SemesterFilter from "../components/filters/SemesterFilter";
@@ -7,9 +7,11 @@ import StudentNumberInput from "../components/StudentNumberInput";
 import Title from "../components/ui/Title";
 import SaveButton from "../components/ui/SaveButton";
 import ClearButton from "../components/ui/ClearButton";
+import Button from "../components/ui/Button";
 import axios from "axios";
 import { BsDownload } from "react-icons/bs";
 import { IoCloudUploadOutline } from "react-icons/io5";
+import { FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
 import * as XLSX from "xlsx";
 
 type MobilityData = {
@@ -27,6 +29,7 @@ type User = {
 };
 
 type StudentFromSheet = {
+  id?: string;
   matricula: string;
   nome: string;
   email: string;
@@ -37,6 +40,21 @@ type StudentFromSheet = {
   cursoDestino: string;
   universidadeOrigem: string;
   universidadeDestino: string;
+};
+
+type MobilityRecord = {
+  id: string;
+  ano: number;
+  semestre: number;
+  enviados: number;
+  recebidos: number;
+  universityId: string;
+  university: {
+    id: string;
+    nome: string;
+    pais: string;
+  };
+  students: StudentFromSheet[];
 };
 
 const REQUIRED_COLUMNS = [
@@ -63,7 +81,7 @@ function normalize(str: string): string {
 const download = "/arquivos/modelo-mobilidade.xlsx";
 
 function CadastroMobilidade() {
-  const userStr = localStorage.getItem("user");
+  const userStr = localStorage.getItem("user") || localStorage.getItem("@mobilidade:user");
   const user: User | null = userStr ? (JSON.parse(userStr) as User) : null;
   const isGestor = user?.perfil === "GESTOR_MOBILIDADE";
 
@@ -78,17 +96,43 @@ function CadastroMobilidade() {
   const [file, setFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [studentsFromSheet, setStudentsFromSheet] = useState<StudentFromSheet[]>([]);
+  const [mobilities, setMobilities] = useState<MobilityRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const [editingMobility, setEditingMobility] = useState<MobilityRecord | null>(null);
+  const [editYear, setEditYear] = useState<number>(2024);
+  const [editEnviados, setEditEnviados] = useState<number>(0);
+  const [editRecebidos, setEditRecebidos] = useState<number>(0);
+
+  const [deletingMobility, setDeletingMobility] = useState<MobilityRecord | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const getHeaders = () => {
+    const token = localStorage.getItem("token") || localStorage.getItem("@mobilidade:token");
+    return { headers: { Authorization: `Bearer ${token}` } };
+  };
 
+  async function fetchMobilities() {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:3333/mobility", getHeaders());
+      setMobilities(response.data);
+    } catch (err: any) {
+      console.error("Erro ao carregar mobilidades:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     async function loadUniversities() {
       try {
-        const resposta = await axios.get<MobilityData[]>("http://localhost:3333/university", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resposta = await axios.get<MobilityData[]>("http://localhost:3333/university", getHeaders());
         setUniversities(resposta.data);
       } catch (error) {
         console.error("Erro ao carregar universidades", error);
@@ -96,6 +140,11 @@ function CadastroMobilidade() {
     }
 
     loadUniversities();
+    fetchMobilities();
+
+    if (isGestor && user?.universityId) {
+      setUniversityId(user.universityId);
+    }
   }, []);
 
   const targetUnivId = isGestor ? user?.universityId : universityId;
@@ -221,44 +270,9 @@ function CadastroMobilidade() {
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
-          if (!paisOrigem) {
-            alert(`Erro na linha ${lineNum}: O campo "PAÍS DE ORIGEM" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!paisDestino) {
-            alert(`Erro na linha ${lineNum}: O campo "PAÍS DE DESTINO" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!rawTipo) {
-            alert(`Erro na linha ${lineNum}: O campo "TIPO DE MOBILIDADE" é obrigatório (use "ENVIADO" ou "RECEBIDO").`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!cursoOrigem) {
-            alert(`Erro na linha ${lineNum}: O campo "CURSO DE ORIGEM" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!cursoDestino) {
-            alert(`Erro na linha ${lineNum}: O campo "CURSO DE DESTINO" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!universidadeOrigem) {
-            alert(`Erro na linha ${lineNum}: O campo "UNIVERSIDADE DE ORIGEM" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!universidadeDestino) {
-            alert(`Erro na linha ${lineNum}: O campo "UNIVERSIDADE DE DESTINO" é obrigatório.`);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
 
           const normTipo = normalize(rawTipo);
-          let tipoFinal = "";
+          let tipoFinal = "ENVIADO";
 
           if (["ENVIADO", "ENVIADOS", "SAIDA", "OUTBOUND"].includes(normTipo)) {
             tipoFinal = "ENVIADO";
@@ -267,11 +281,7 @@ function CadastroMobilidade() {
             tipoFinal = "RECEBIDO";
             receivedCount++;
           } else {
-            alert(
-              `Erro na linha ${lineNum}: O campo "TIPO DE MOBILIDADE" ("${rawTipo}") é inválido. Utilize "ENVIADO" ou "RECEBIDO".`
-            );
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
+            sentCount++;
           }
 
           parsedStudents.push({
@@ -322,18 +332,6 @@ function CadastroMobilidade() {
       return;
     }
 
-    if (studentsFromSheet.length === 0) {
-      alert("Por favor, importe a planilha com os estudantes da mobilidade.");
-      return;
-    }
-
-    if (sentStudents === 0 && receivedStudents === 0) {
-      alert("Nenhum estudante enviado ou recebido foi identificado na planilha.");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-
     try {
       setIsSaving(true);
 
@@ -347,15 +345,12 @@ function CadastroMobilidade() {
           universityId: currentUnivId,
           estudantes: studentsFromSheet,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        getHeaders()
       );
 
-      alert("Mobilidade cadastrada com sucesso e planilha importada!");
+      alert("Mobilidade cadastrada com sucesso!");
       clearFilters();
+      fetchMobilities();
     } catch (error: unknown) {
       console.error("Erro ao cadastrar mobilidade:", error);
       if (axios.isAxiosError(error)) {
@@ -368,8 +363,54 @@ function CadastroMobilidade() {
     }
   }
 
+  async function handleUpdateMobility(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingMobility) return;
+
+    try {
+      await axios.put(
+        `http://localhost:3333/mobility/${editingMobility.id}`,
+        {
+          ano: editYear,
+          enviados: editEnviados,
+          recebidos: editRecebidos,
+          universityId: editingMobility.universityId,
+        },
+        getHeaders()
+      );
+
+      alert("Registo de mobilidade atualizado com sucesso!");
+      setEditingMobility(null);
+      fetchMobilities();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Erro ao atualizar registo de mobilidade.");
+    }
+  }
+
+  async function handleDeleteMobilityConfirm() {
+    if (!deletingMobility) return;
+
+    try {
+      await axios.delete(`http://localhost:3333/mobility/${deletingMobility.id}`, getHeaders());
+      alert("Registo de mobilidade excluído com sucesso!");
+      setDeletingMobility(null);
+      fetchMobilities();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Erro ao excluir registo de mobilidade.");
+    }
+  }
+
+
+
+  function startEdit(item: MobilityRecord) {
+    setEditingMobility(item);
+    setEditYear(item.ano);
+    setEditEnviados(item.enviados);
+    setEditRecebidos(item.recebidos);
+  }
+
   return (
-    <div className="flex min-h-screen ">
+    <div className="flex min-h-screen">
       <Sidebar />
 
       <main className="flex-1 px-4 md:px-10 py-4">
@@ -377,6 +418,7 @@ function CadastroMobilidade() {
           title="Cadastro de Mobilidade"
           subtitle="Registe novos dados de mobilidade no sistema"
         />
+
         <div className="flex flex-col md:flex-row gap-4">
           <section className="w-full p-6 bg-[#FFFFFF] border border-gray-300 rounded-lg mt-5 flex-1">
             <div className="flex flex-col w-full">
@@ -394,21 +436,19 @@ function CadastroMobilidade() {
                 <StudentNumberInput
                   label="Estudantes Enviados"
                   value={sentStudents}
-                  readOnly
-                  disabled
+                  onChange={setSentStudents}
                 />
                 <StudentNumberInput
                   label="Estudantes Recebidos"
                   value={receivedStudents}
-                  readOnly
-                  disabled
+                  onChange={setReceivedStudents}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 w-full">
-                <button className="border border-gray-300 text-[#173764] font-bold px-5 py-3 rounded-md flex items-center justify-center gap-2 hover:bg-gray-50 w-full">
+                <button className="border border-gray-300 text-[#173764] font-bold px-5 py-3 rounded-md flex items-center justify-center gap-2 hover:bg-gray-50 w-full cursor-pointer">
                   <BsDownload />
-                  <a href={download} download="modelo-mobilidade.xlsx">
+                  <a href={download} download="modelo-mobilidade.xlsx" className="no-underline text-[#173764]">
                     Baixar planilha modelo
                   </a>
                 </button>
@@ -443,7 +483,7 @@ function CadastroMobilidade() {
           </section>
 
           <section>
-            <div className="flex flex-col bg-linear-to-br from-[#0E284E] to-[#17498b] rounded-lg mt-5 p-8 min-w-[280px]">
+            <div className="flex flex-col bg-gradient-to-br from-[#0E284E] to-[#17498b] rounded-lg mt-5 p-8 min-w-[280px]">
               <Title
                 title="Prévia do Registo"
                 size="text-2xl"
@@ -490,25 +530,228 @@ function CadastroMobilidade() {
           </section>
         </div>
 
-        <section className="p-6 bg-[#FFFFFF] border border-gray-300 rounded-lg mt-5">
-          <div>
-            <Title title="Instruções para o Registo" size="text-2xl" />
-            <div className="flex flex-col gap-2 mt-3 text-[#404c4e]">
-              <p>
-                <strong>1. Seleção:</strong> Escolha a Universidade, o Ano e o Semestre de referência.
-              </p>
-              <p>
-                <strong>2. Planilha Modelo:</strong> Baixe o modelo e preencha todos os campos obrigatórios dos estudantes (Matrícula, Nome, Email, Países de Origem/Destino, Tipo de Mobilidade, Cursos e Universidades de Origem/Destino).
-              </p>
-              <p>
-                <strong>3. Contagem Automática:</strong> Ao importar a planilha, o sistema contabilizará instantaneamente os estudantes <strong>Enviados</strong> e <strong>Recebidos</strong> com base no Tipo de Mobilidade de cada aluno.
-              </p>
-              <p>
-                <strong>4. Confirmação e Salvamento:</strong> Confira os totais calculados na Prévia e clique em <strong>Salvar Registo</strong> para concluir o cadastro.
-              </p>
+        {(() => {
+          const filteredMobilities = mobilities.filter((item) => {
+            const term = searchTerm.toLowerCase();
+            const uniName = (item.university?.nome || "").toLowerCase();
+            const uniCountry = (item.university?.pais || "").toLowerCase();
+            const yearStr = String(item.ano);
+            return uniName.includes(term) || uniCountry.includes(term) || yearStr.includes(term);
+          });
+
+          const totalPages = Math.ceil(filteredMobilities.length / itemsPerPage) || 1;
+          const paginatedMobilities = filteredMobilities.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+          );
+          const emptyRows = itemsPerPage - paginatedMobilities.length;
+
+          return (
+            <section className="p-6 bg-[#FFFFFF] border border-gray-300 rounded-lg mt-6 flex flex-col justify-between min-h-[560px]">
+              <div>
+                <h3 className="text-2xl text-[#0E284E] font-serif mb-6">Registos de Mobilidade no Sistema</h3>
+
+                <div className="relative mt-4 mb-4 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Pesquisar por universidade, país ou ano..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full bg-[#F8FAFC] border border-gray-300 rounded-md pl-9 pr-3 py-2 text-sm text-gray-700 outline-none"
+                  />
+                  <FiSearch className="absolute left-3 top-3 text-gray-400" size={16} />
+                </div>
+
+                <div className="overflow-x-auto min-h-[405px]">
+                  <table className="w-full border-collapse text-left text-sm table-fixed">
+                    <thead className="bg-[#F3F6F8] text-[#404c4e]">
+                      <tr className="h-[45px]">
+                        <th className="p-3 w-4/12 whitespace-nowrap">UNIVERSIDADE</th>
+                        <th className="p-3 w-2/12 whitespace-nowrap">PAÍS</th>
+                        <th className="p-3 w-1/12 whitespace-nowrap">ANO</th>
+                        <th className="p-3 w-1/12 whitespace-nowrap">ENVIADOS</th>
+                        <th className="p-3 w-1/12 whitespace-nowrap">RECEBIDOS</th>
+                        <th className="p-3 w-1/12 whitespace-nowrap">TOTAL</th>
+                        <th className="p-3 w-2/12 text-right whitespace-nowrap">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr className="h-[360px]">
+                          <td colSpan={7} className="p-4 text-center text-gray-500 align-middle">
+                            Carregando mobilidades...
+                          </td>
+                        </tr>
+                      ) : paginatedMobilities.length === 0 ? (
+                        <tr className="h-[360px]">
+                          <td colSpan={7} className="p-4 text-center text-gray-500 align-middle">
+                            Nenhum registo de mobilidade encontrado.
+                          </td>
+                        </tr>
+                      ) : (
+                        <>
+                          {paginatedMobilities.map((item) => (
+                            <React.Fragment key={item.id}>
+                              <tr className="border-b border-gray-200 hover:bg-gray-50 font-medium h-[45px] box-border">
+                                <td className="p-3 text-gray-800 whitespace-nowrap truncate max-w-0" title={item.university?.nome || "N/A"}>
+                                  {item.university?.nome || "N/A"}
+                                </td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap truncate max-w-0" title={item.university?.pais || "N/A"}>
+                                  {item.university?.pais || "N/A"}
+                                </td>
+                                <td className="p-3 text-gray-800 whitespace-nowrap">{item.ano}</td>
+                                <td className="p-3 text-blue-600 font-semibold whitespace-nowrap">{item.enviados}</td>
+                                <td className="p-3 text-green-600 font-semibold whitespace-nowrap">{item.recebidos}</td>
+                                <td className="p-3 font-bold text-gray-800 whitespace-nowrap">{item.enviados + item.recebidos}</td>
+                                <td className="p-3 text-right whitespace-nowrap">
+                                  <div className="flex justify-end gap-3">
+                                    <button
+                                      onClick={() => startEdit(item)}
+                                      title="Editar Mobilidade"
+                                      className="p-1 text-[#0E284E] hover:text-[#173764] cursor-pointer"
+                                    >
+                                      <FiEdit2 size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => setDeletingMobility(item)}
+                                      title="Excluir Mobilidade"
+                                      className="p-1 text-red-600 hover:text-red-800 cursor-pointer"
+                                    >
+                                      <FiTrash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            </React.Fragment>
+                          ))}
+                          {emptyRows > 0 &&
+                            Array.from({ length: emptyRows }).map((_, idx) => (
+                              <tr key={`empty-${idx}`} className="border-b border-gray-100 h-[45px]">
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
+                              </tr>
+                            ))}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100 text-sm text-gray-600">
+                <span>
+                  Página {currentPage} de {totalPages} ({filteredMobilities.length} registos)
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    className="!w-auto px-4 py-2 text-sm"
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    className="!w-auto px-4 py-2 text-sm"
+                  >
+                    Próximo
+                  </Button>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
+        {editingMobility && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+              <h4 className="text-xl font-bold text-[#0E284E] mb-4 font-serif">Editar Registo de Mobilidade</h4>
+              <form onSubmit={handleUpdateMobility} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Universidade</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={editingMobility.university?.nome || ""}
+                    className="w-full bg-gray-100 border border-gray-300 rounded p-2 text-sm text-gray-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Ano</label>
+                  <input
+                    type="number"
+                    value={editYear}
+                    onChange={(e) => setEditYear(Number(e.target.value))}
+                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <StudentNumberInput label="Enviados" value={editEnviados} onChange={setEditEnviados} />
+                  </div>
+                  <div className="flex-1">
+                    <StudentNumberInput label="Recebidos" value={editRecebidos} onChange={setEditRecebidos} />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMobility(null)}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </section>
+        )}
+
+        {deletingMobility && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+              <h4 className="text-lg font-bold text-red-600 mb-2 font-serif">Excluir Mobilidade</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Tem certeza que deseja excluir este registo de mobilidade de{" "}
+                <strong>{deletingMobility.university?.nome}</strong> ({deletingMobility.ano})?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeletingMobility(null)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteMobilityConfirm}
+                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
+                >
+                  Confirmar Exclusão
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
