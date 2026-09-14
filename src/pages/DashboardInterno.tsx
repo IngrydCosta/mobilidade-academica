@@ -84,7 +84,7 @@ function DashboardInterno() {
         const resposta = await axios.get("http://localhost:3333/dashboard/private", {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            university: isGestor ? user?.universityId : (universityFilter || undefined),
+            university: universityFilter || undefined,
             country: countryFilter || undefined,
             year: yearFilter ? Number(yearFilter) : undefined,
           },
@@ -98,7 +98,7 @@ function DashboardInterno() {
     }
 
     findDashboard();
-  }, [universityFilter, countryFilter, yearFilter, isGestor, user?.universityId]);
+  }, [universityFilter, countryFilter, yearFilter]);
 
   const columns: Column<MobilityData>[] = [
     {
@@ -161,7 +161,7 @@ function DashboardInterno() {
           <h2 className="text-[#0E284E] text-xl font-medium">Filtros</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <UniversityFilter value={universityFilter} onChange={setUniversityFilter} disabled={isGestor} />
+            <UniversityFilter value={universityFilter} onChange={setUniversityFilter} />
             <CountryFilter value={countryFilter} onChange={setCountryFilter} />
             <YearFilter value={yearFilter} onChange={setYearFilter} />
           </div>

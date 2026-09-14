@@ -90,7 +90,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onClose: () => void }> = ({ toa
 
   return (
     <div
-      className={`pointer-events-auto flex items-start gap-3 p-4 rounded-lg border-l-4 shadow-xl transition-all duration-300 transform translate-y-0 ${style.bg} ${style.border}`}
+      className={`pointer-events-auto flex items-start gap-3 p-4 rounded-lg shadow-xl transition-all duration-300 transform translate-y-0 ${style.bg} ${style.border}`}
     >
       <div className="mt-0.5">{style.icon}</div>
       <div className={`flex-1 text-sm font-medium leading-snug ${style.text}`}>{toast.message}</div>
