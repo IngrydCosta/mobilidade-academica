@@ -36,7 +36,7 @@ export default function UniversityFilter({ value, onChange, disabled = false }: 
 
   return (
     <div className="flex flex-col w-full">
-      <label className="text-[#404c4e] font-medium text-md">
+      <label className="text-[#404c4e] font-medium text-sm mb-1">
         Universidade
       </label>
 

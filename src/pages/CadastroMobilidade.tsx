@@ -107,10 +107,26 @@ function CadastroMobilidade() {
 
   const [editingMobility, setEditingMobility] = useState<MobilityRecord | null>(null);
   const [editYear, setEditYear] = useState<number>(2024);
-  const [editEnviados, setEditEnviados] = useState<number>(0);
-  const [editRecebidos, setEditRecebidos] = useState<number>(0);
+  const [editSemester, setEditSemester] = useState<number>(1);
+  const [editUniversityId, setEditUniversityId] = useState<string>("");
+
+  const [editingStudent, setEditingStudent] = useState<StudentFromSheet | null>(null);
+  const [showAddStudentModal, setShowAddStudentModal] = useState<boolean>(false);
+  const [studentForm, setStudentForm] = useState<StudentFromSheet>({
+    matricula: "",
+    nome: "",
+    email: "",
+    paisOrigem: "",
+    paisDestino: "",
+    tipoMobilidade: "ENVIADO",
+    cursoOrigem: "",
+    cursoDestino: "",
+    universidadeOrigem: "",
+    universidadeDestino: "",
+  });
 
   const [deletingMobility, setDeletingMobility] = useState<MobilityRecord | null>(null);
+  const [deletingStudentConfirm, setDeletingStudentConfirm] = useState<StudentFromSheet | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -373,9 +389,8 @@ function CadastroMobilidade() {
         `http://localhost:3333/mobility/${editingMobility.id}`,
         {
           ano: editYear,
-          enviados: editEnviados,
-          recebidos: editRecebidos,
-          universityId: editingMobility.universityId,
+          semestre: editSemester,
+          universityId: editUniversityId,
         },
         getHeaders()
       );
@@ -385,6 +400,81 @@ function CadastroMobilidade() {
       fetchMobilities();
     } catch (err: any) {
       showToast(err.response?.data?.message || "Erro ao atualizar registo de mobilidade.", "error");
+    }
+  }
+
+  async function refreshEditingMobility(mobilityId: string) {
+    try {
+      const res = await axios.get(`http://localhost:3333/mobility/${mobilityId}`, getHeaders());
+      setEditingMobility(res.data);
+      fetchMobilities();
+    } catch (err) {
+      console.error("Erro ao atualizar mobilidade em edição", err);
+    }
+  }
+
+  async function handleUpdateStudent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingStudent || !editingStudent.id || !editingMobility) return;
+
+    try {
+      await axios.put(
+        `http://localhost:3333/mobility/students/${editingStudent.id}`,
+        editingStudent,
+        getHeaders()
+      );
+      showToast("Estudante atualizado com sucesso!", "success");
+      setEditingStudent(null);
+      refreshEditingMobility(editingMobility.id);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Erro ao atualizar estudante.", "error");
+    }
+  }
+
+  async function handleDeleteStudent(studentId: string) {
+    if (!editingMobility) return;
+
+    try {
+      await axios.delete(`http://localhost:3333/mobility/students/${studentId}`, getHeaders());
+      showToast("Estudante removido com sucesso!", "success");
+      refreshEditingMobility(editingMobility.id);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Erro ao remover estudante.", "error");
+    }
+  }
+
+  async function handleAddStudent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingMobility) return;
+
+    if (!studentForm.nome || !studentForm.email || !studentForm.matricula) {
+      showToast("Preencha todos os campos obrigatórios (Nome, E-mail e Matrícula).", "warning");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `http://localhost:3333/mobility/${editingMobility.id}/students`,
+        studentForm,
+        getHeaders()
+      );
+      showToast("Estudante adicionado com sucesso!", "success");
+      setShowAddStudentModal(false);
+      setStudentForm({
+        matricula: "",
+        nome: "",
+        email: "",
+        paisOrigem: "",
+        paisDestino: "",
+        tipoMobilidade: "ENVIADO",
+        cursoOrigem: "",
+        cursoDestino: "",
+        universidadeOrigem: "",
+        universidadeDestino: "",
+      });
+      refreshEditingMobility(editingMobility.id);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Erro ao adicionar estudante.", "error");
     }
   }
 
@@ -401,13 +491,11 @@ function CadastroMobilidade() {
     }
   }
 
-
-
   function startEdit(item: MobilityRecord) {
     setEditingMobility(item);
     setEditYear(item.ano);
-    setEditEnviados(item.enviados);
-    setEditRecebidos(item.recebidos);
+    setEditSemester(item.semestre || 1);
+    setEditUniversityId(item.universityId);
   }
 
   return (
@@ -570,25 +658,26 @@ function CadastroMobilidade() {
                   <table className="w-full border-collapse text-left text-sm table-fixed">
                     <thead className="bg-[#F3F6F8] text-[#404c4e]">
                       <tr className="h-[45px]">
-                        <th className="p-3 w-4/12 whitespace-nowrap">UNIVERSIDADE</th>
+                        <th className="p-3 w-3/12 whitespace-nowrap">UNIVERSIDADE</th>
                         <th className="p-3 w-2/12 whitespace-nowrap">PAÍS</th>
                         <th className="p-3 w-1/12 whitespace-nowrap">ANO</th>
+                        <th className="p-3 w-2/12 whitespace-nowrap">SEMESTRE</th>
                         <th className="p-3 w-1/12 whitespace-nowrap">ENVIADOS</th>
                         <th className="p-3 w-1/12 whitespace-nowrap">RECEBIDOS</th>
                         <th className="p-3 w-1/12 whitespace-nowrap">TOTAL</th>
-                        <th className="p-3 w-2/12 text-right whitespace-nowrap">AÇÕES</th>
+                        <th className="p-3 w-1/12 text-right whitespace-nowrap">AÇÕES</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
                         <tr className="h-[360px]">
-                          <td colSpan={7} className="p-4 text-center text-gray-500 align-middle">
+                          <td colSpan={8} className="p-4 text-center text-gray-500 align-middle">
                             Carregando mobilidades...
                           </td>
                         </tr>
                       ) : paginatedMobilities.length === 0 ? (
                         <tr className="h-[360px]">
-                          <td colSpan={7} className="p-4 text-center text-gray-500 align-middle">
+                          <td colSpan={8} className="p-4 text-center text-gray-500 align-middle">
                             Nenhum registo de mobilidade encontrado.
                           </td>
                         </tr>
@@ -596,17 +685,18 @@ function CadastroMobilidade() {
                         <>
                           {paginatedMobilities.map((item) => (
                             <React.Fragment key={item.id}>
-                              <tr className="border-b border-gray-200 hover:bg-gray-50 font-medium h-[45px] box-border">
+                              <tr className="border-b border-gray-200 hover:bg-gray-50 font-normal h-[45px] box-border">
                                 <td className="p-3 text-gray-800 whitespace-nowrap truncate max-w-0" title={item.university?.nome || "N/A"}>
                                   {item.university?.nome || "N/A"}
                                 </td>
                                 <td className="p-3 text-gray-600 whitespace-nowrap truncate max-w-0" title={item.university?.pais || "N/A"}>
                                   {item.university?.pais || "N/A"}
                                 </td>
-                                <td className="p-3 text-gray-800 whitespace-nowrap">{item.ano}</td>
-                                <td className="p-3 text-blue-600 font-semibold whitespace-nowrap">{item.enviados}</td>
-                                <td className="p-3 text-green-600 font-semibold whitespace-nowrap">{item.recebidos}</td>
-                                <td className="p-3 font-bold text-gray-800 whitespace-nowrap">{item.enviados + item.recebidos}</td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap">{item.ano}</td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap">{item.semestre ? `${item.semestre}º Semestre` : "-"}</td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap">{item.enviados}</td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap">{item.recebidos}</td>
+                                <td className="p-3 text-gray-600 whitespace-nowrap">{item.enviados + item.recebidos}</td>
                                 <td className="p-3 text-right whitespace-nowrap">
                                   <div className="flex justify-end gap-3">
                                     <button
@@ -619,7 +709,7 @@ function CadastroMobilidade() {
                                     <button
                                       onClick={() => setDeletingMobility(item)}
                                       title="Excluir Mobilidade"
-                                      className="p-1 text-red-600 hover:text-red-800 cursor-pointer"
+                                      className="p-1 text-[#173764] hover:text-[#0E284E] cursor-pointer"
                                     >
                                       <FiTrash2 size={16} />
                                     </button>
@@ -631,6 +721,7 @@ function CadastroMobilidade() {
                           {emptyRows > 0 &&
                             Array.from({ length: emptyRows }).map((_, idx) => (
                               <tr key={`empty-${idx}`} className="border-b border-gray-100 h-[45px]">
+                                <td className="p-3 whitespace-nowrap">&nbsp;</td>
                                 <td className="p-3 whitespace-nowrap">&nbsp;</td>
                                 <td className="p-3 whitespace-nowrap">&nbsp;</td>
                                 <td className="p-3 whitespace-nowrap">&nbsp;</td>
@@ -673,52 +764,340 @@ function CadastroMobilidade() {
         })()}
 
         {editingMobility && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-              <h4 className="text-xl font-bold text-[#0E284E] mb-4 font-serif">Editar Registo de Mobilidade</h4>
-              <form onSubmit={handleUpdateMobility} className="space-y-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800 overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 max-w-5xl w-full shadow-xl my-8 max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Universidade</label>
+                  <h4 className="text-xl font-bold text-[#0E284E] font-serif">Editar Registo de Mobilidade</h4>
+                </div>
+                <button
+                  onClick={() => setEditingMobility(null)}
+                  className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 pr-1 space-y-6">
+                <form onSubmit={handleUpdateMobility} className="space-y-4 bg-[#F8FAFC] p-4 rounded-lg border border-gray-200">
+                  <h5 className="font-semibold text-sm text-[#0E284E] uppercase tracking-wider">Dados do Lote</h5>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <UniversityFilter
+                        value={editUniversityId}
+                        onChange={setEditUniversityId}
+                        disabled={isGestor}
+                      />
+                    </div>
+
+                    <div>
+                      <YearFilter
+                        value={String(editYear)}
+                        onChange={(val) => setEditYear(Number(val))}
+                      />
+                    </div>
+
+                    <div>
+                      <SemesterFilter
+                        value={editSemester}
+                        onChange={(val) => setEditSemester(Number(val))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-6 items-center pt-2 text-sm text-gray-700 font-medium">
+                    <span>Enviados: <strong>{editingMobility.enviados}</strong></span>
+                    <span>Recebidos: <strong>{editingMobility.recebidos}</strong></span>
+                    <span>Total: <strong>{editingMobility.enviados + editingMobility.recebidos}</strong></span>
+                    <span className="text-xs text-gray-400 font-normal">
+                      (calculado automaticamente)
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm bg-[#173764] text-white font-medium rounded-md hover:bg-[#0E284E] cursor-pointer transition-colors"
+                    >
+                      Salvar Dados do Lote
+                    </button>
+                  </div>
+                </form>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h5 className="font-semibold text-base text-[#0E284E]">
+                      Estudantes no Lote ({editingMobility.students?.length || 0})
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStudentForm({
+                          matricula: "",
+                          nome: "",
+                          email: "",
+                          paisOrigem: editingMobility.university?.pais || "",
+                          paisDestino: "",
+                          tipoMobilidade: "ENVIADO",
+                          cursoOrigem: "",
+                          cursoDestino: "",
+                          universidadeOrigem: editingMobility.university?.nome || "",
+                          universidadeDestino: "",
+                        });
+                        setShowAddStudentModal(true);
+                      }}
+                      className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer font-medium transition-colors"
+                    >
+                      + Adicionar Estudante
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-60 overflow-y-auto">
+                    <table className="w-full border-collapse text-left text-xs">
+                      <thead className="bg-[#F3F6F8] text-[#404c4e] sticky top-0">
+                        <tr>
+                          <th className="p-2.5">MATRÍCULA</th>
+                          <th className="p-2.5">NOME</th>
+                          <th className="p-2.5">EMAIL</th>
+                          <th className="p-2.5">TIPO</th>
+                          <th className="p-2.5">CURSO ORIGEM</th>
+                          <th className="p-2.5 text-right">AÇÕES</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(!editingMobility.students || editingMobility.students.length === 0) ? (
+                          <tr>
+                            <td colSpan={6} className="p-4 text-center text-gray-500">
+                              Nenhum estudante neste lote de mobilidade.
+                            </td>
+                          </tr>
+                        ) : (
+                          editingMobility.students.map((st) => (
+                            <tr key={st.id || st.matricula} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="p-2.5 font-mono text-gray-700">{st.matricula}</td>
+                              <td className="p-2.5 font-medium text-gray-800">{st.nome}</td>
+                              <td className="p-2.5 text-gray-600">{st.email}</td>
+                              <td className="p-2.5 text-gray-700 font-medium">
+                                {st.tipoMobilidade}
+                              </td>
+                              <td className="p-2.5 text-gray-600 truncate max-w-[120px]" title={st.cursoOrigem}>{st.cursoOrigem || "-"}</td>
+                              <td className="p-2.5 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingStudent(st)}
+                                    className="p-1 text-[#0E284E] hover:text-blue-700 cursor-pointer"
+                                    title="Editar Estudante"
+                                  >
+                                    <FiEdit2 size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingStudentConfirm(st)}
+                                    className="p-1 text-[#173764] hover:text-[#0E284E] cursor-pointer"
+                                    title="Excluir Estudante"
+                                  >
+                                    <FiTrash2 size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-gray-200 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingMobility(null)}
+                  className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer font-medium"
+                >
+                  Concluir / Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {editingStudent && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
+              <h4 className="text-lg font-bold text-[#0E284E] mb-4 font-serif">Editar Estudante</h4>
+              <form onSubmit={handleUpdateStudent} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Matrícula</label>
+                    <input
+                      type="text"
+                      value={editingStudent.matricula}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, matricula: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Tipo de Mobilidade</label>
+                    <select
+                      value={editingStudent.tipoMobilidade}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, tipoMobilidade: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs cursor-pointer"
+                    >
+                      <option value="ENVIADO">ENVIADO</option>
+                      <option value="RECEBIDO">RECEBIDO</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">Nome do Estudante</label>
                   <input
                     type="text"
-                    disabled
-                    value={editingMobility.university?.nome || ""}
-                    className="w-full bg-gray-100 border border-gray-300 rounded p-2 text-sm text-gray-600"
+                    value={editingStudent.nome}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, nome: e.target.value })}
+                    className="w-full border border-gray-300 rounded p-2 text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Ano</label>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">E-mail</label>
                   <input
-                    type="number"
-                    value={editYear}
-                    onChange={(e) => setEditYear(Number(e.target.value))}
-                    className="w-full border border-gray-300 rounded p-2 text-sm"
+                    type="email"
+                    value={editingStudent.email}
+                    onChange={(e) => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded p-2 text-xs"
                   />
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <StudentNumberInput label="Enviados" value={editEnviados} onChange={setEditEnviados} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Origem</label>
+                    <input
+                      type="text"
+                      value={editingStudent.cursoOrigem}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, cursoOrigem: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                    />
                   </div>
-                  <div className="flex-1">
-                    <StudentNumberInput label="Recebidos" value={editRecebidos} onChange={setEditRecebidos} />
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Destino</label>
+                    <input
+                      type="text"
+                      value={editingStudent.cursoDestino}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, cursoDestino: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                    />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
                   <button
                     type="button"
-                    onClick={() => setEditingMobility(null)}
-                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+                    onClick={() => setEditingStudent(null)}
+                    className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-800 cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer"
+                    className="px-4 py-1.5 text-xs bg-[#173764] text-white rounded hover:bg-[#0E284E] cursor-pointer font-medium"
                   >
-                    Salvar Alterações
+                    Salvar Estudante
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showAddStudentModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
+              <h4 className="text-lg font-bold text-[#0E284E] mb-4 font-serif">Adicionar Estudante</h4>
+              <form onSubmit={handleAddStudent} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Matrícula *</label>
+                    <input
+                      type="text"
+                      value={studentForm.matricula}
+                      onChange={(e) => setStudentForm({ ...studentForm, matricula: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                      placeholder="Ex: 2024001"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Tipo de Mobilidade</label>
+                    <select
+                      value={studentForm.tipoMobilidade}
+                      onChange={(e) => setStudentForm({ ...studentForm, tipoMobilidade: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs cursor-pointer"
+                    >
+                      <option value="ENVIADO">ENVIADO</option>
+                      <option value="RECEBIDO">RECEBIDO</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">Nome do Estudante *</label>
+                  <input
+                    type="text"
+                    value={studentForm.nome}
+                    onChange={(e) => setStudentForm({ ...studentForm, nome: e.target.value })}
+                    className="w-full border border-gray-300 rounded p-2 text-xs"
+                    placeholder="Nome completo"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-700 block mb-1">E-mail *</label>
+                  <input
+                    type="email"
+                    value={studentForm.email}
+                    onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded p-2 text-xs"
+                    placeholder="email@estudante.eu"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Origem</label>
+                    <input
+                      type="text"
+                      value={studentForm.cursoOrigem}
+                      onChange={(e) => setStudentForm({ ...studentForm, cursoOrigem: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Destino</label>
+                    <input
+                      type="text"
+                      value={studentForm.cursoDestino}
+                      onChange={(e) => setStudentForm({ ...studentForm, cursoDestino: e.target.value })}
+                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddStudentModal(false)}
+                    className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-800 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 text-xs bg-[#173764] text-white rounded hover:bg-[#0E284E] cursor-pointer font-medium"
+                  >
+                    Adicionar
                   </button>
                 </div>
               </form>
@@ -729,7 +1108,7 @@ function CadastroMobilidade() {
         {deletingMobility && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-              <h4 className="text-lg font-bold text-red-600 mb-2 font-serif">Excluir Mobilidade</h4>
+              <h4 className="text-lg font-bold text-[#0E284E] mb-2 font-serif">Excluir Mobilidade</h4>
               <p className="text-sm text-gray-600 mb-4">
                 Tem certeza que deseja excluir este registo de mobilidade de{" "}
                 <strong>{deletingMobility.university?.nome}</strong> ({deletingMobility.ano})?
@@ -745,7 +1124,39 @@ function CadastroMobilidade() {
                 <button
                   type="button"
                   onClick={handleDeleteMobilityConfirm}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
+                  className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer"
+                >
+                  Confirmar Exclusão
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {deletingStudentConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+              <h4 className="text-lg font-bold text-[#0E284E] mb-2 font-serif">Excluir Estudante</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Tem certeza que deseja excluir o estudante <strong>{deletingStudentConfirm.nome}</strong> (Matrícula: {deletingStudentConfirm.matricula}) deste lote de mobilidade?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeletingStudentConfirm(null)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (deletingStudentConfirm.id) {
+                      handleDeleteStudent(deletingStudentConfirm.id);
+                    }
+                    setDeletingStudentConfirm(null);
+                  }}
+                  className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer"
                 >
                   Confirmar Exclusão
                 </button>

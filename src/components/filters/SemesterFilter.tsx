@@ -11,11 +11,11 @@ function SemesterFilter({
 }: SemesterFilterProps) {
   return (
     <div className="flex flex-col w-full">
-      <label className="text-[#404c4e] font-medium text-md">
+      <label className="text-[#404c4e] font-medium text-sm mb-1">
         {label}
       </label>
 
-      <div className="bg-[#F8FAFC] border border-gray-300 rounded-md p-2 mr-5 w-full">
+      <div className="bg-[#F8FAFC] border border-gray-300 rounded-md p-2 w-full">
         <select
           id="semester"
           value={value ? String(value) : ""}

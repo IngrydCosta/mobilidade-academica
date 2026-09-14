@@ -295,7 +295,7 @@ function CadastroUtilizador() {
                                   <button
                                     onClick={() => setDeletingUser(u)}
                                     title="Excluir"
-                                    className="p-1 text-red-600 hover:text-red-800 cursor-pointer"
+                                    className="p-1 text-[#173764] hover:text-[#0E284E] cursor-pointer"
                                   >
                                     <FiTrash2 size={16} />
                                   </button>
@@ -417,7 +417,7 @@ function CadastroUtilizador() {
         {deletingUser && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-              <h4 className="text-lg font-bold text-red-600 mb-2 font-serif">Excluir Utilizador</h4>
+              <h4 className="text-lg font-bold text-[#0E284E] mb-2 font-serif">Excluir Utilizador</h4>
               <p className="text-sm text-gray-600 mb-4">
                 Tem certeza que deseja excluir o utilizador <strong>{deletingUser.nome}</strong> ({deletingUser.email})?
               </p>
@@ -432,7 +432,7 @@ function CadastroUtilizador() {
                 <button
                   type="button"
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
+                  className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer"
                 >
                   Confirmar Exclusão
                 </button>
