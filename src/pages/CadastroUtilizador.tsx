@@ -8,6 +8,7 @@ import SaveButton from "../components/ui/SaveButton";
 import Button from "../components/ui/Button";
 import { FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
 import { useToast } from "../context/ToastContext";
+import { API_URL } from "../services/api";
 
 type UserData = {
   id: string;
@@ -23,23 +24,24 @@ type UserData = {
 
 function CadastroUtilizador() {
   const { showToast } = useToast();
+  const [users, setUsers] = useState<UserData[]>([]);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [perfil, setProfile] = useState("");
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [universityId, setUniversityId] = useState<string>("");
+  const [universityId, setUniversityId] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editProfile, setEditProfile] = useState<string>("");
+  const [editProfile, setEditProfile] = useState("");
   const [editUniversityId, setEditUniversityId] = useState("");
 
   const [deletingUser, setDeletingUser] = useState<UserData | null>(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
   const getHeaders = () => {
     const token = localStorage.getItem("token") || localStorage.getItem("@mobilidade:token");
@@ -48,7 +50,7 @@ function CadastroUtilizador() {
 
   async function fetchUsers() {
     try {
-      const resposta = await axios.get("http://localhost:3333/user", getHeaders());
+      const resposta = await axios.get(`${API_URL}/user`, getHeaders());
       setUsers(resposta.data);
     } catch (error) {
       console.error("Erro ao carregar utilizadores", error);
@@ -74,7 +76,7 @@ function CadastroUtilizador() {
 
     try {
       await axios.post(
-        "http://localhost:3333/user",
+        `${API_URL}/user`,
         {
           nome: name,
           email: email,
@@ -102,7 +104,7 @@ function CadastroUtilizador() {
 
     try {
       await axios.put(
-        `http://localhost:3333/user/${editingUser.id}`,
+        `${API_URL}/user/${editingUser.id}`,
         {
           nome: editName,
           email: editEmail,
@@ -125,7 +127,7 @@ function CadastroUtilizador() {
     if (!deletingUser) return;
 
     try {
-      await axios.delete(`http://localhost:3333/user/${deletingUser.id}`, getHeaders());
+      await axios.delete(`${API_URL}/user/${deletingUser.id}`, getHeaders());
       showToast("Utilizador excluído com sucesso!", "success");
       setDeletingUser(null);
       fetchUsers();

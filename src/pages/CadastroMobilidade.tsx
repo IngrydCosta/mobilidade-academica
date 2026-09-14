@@ -14,6 +14,7 @@ import { IoCloudUploadOutline } from "react-icons/io5";
 import { FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import { useToast } from "../context/ToastContext";
+import { API_URL } from "../services/api";
 
 type MobilityData = {
   id: string;
@@ -138,7 +139,7 @@ function CadastroMobilidade() {
   async function fetchMobilities() {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:3333/mobility", getHeaders());
+      const response = await axios.get(`${API_URL}/mobility`, getHeaders());
       setMobilities(response.data);
     } catch (err: any) {
       console.error("Erro ao carregar mobilidades:", err);
@@ -150,7 +151,7 @@ function CadastroMobilidade() {
   useEffect(() => {
     async function loadUniversities() {
       try {
-        const resposta = await axios.get<MobilityData[]>("http://localhost:3333/university", getHeaders());
+        const resposta = await axios.get<MobilityData[]>(`${API_URL}/university`, getHeaders());
         setUniversities(resposta.data);
       } catch (error) {
         console.error("Erro ao carregar universidades", error);
@@ -353,7 +354,7 @@ function CadastroMobilidade() {
       setIsSaving(true);
 
       await axios.post(
-        "http://localhost:3333/mobility",
+        `${API_URL}/mobility`,
         {
           ano: Number(yearFilter),
           semestre: Number(semesterFilter),
@@ -386,7 +387,7 @@ function CadastroMobilidade() {
 
     try {
       await axios.put(
-        `http://localhost:3333/mobility/${editingMobility.id}`,
+        `${API_URL}/mobility/${editingMobility.id}`,
         {
           ano: editYear,
           semestre: editSemester,
@@ -405,7 +406,7 @@ function CadastroMobilidade() {
 
   async function refreshEditingMobility(mobilityId: string) {
     try {
-      const res = await axios.get(`http://localhost:3333/mobility/${mobilityId}`, getHeaders());
+      const res = await axios.get(`${API_URL}/mobility/${mobilityId}`, getHeaders());
       setEditingMobility(res.data);
       fetchMobilities();
     } catch (err) {
@@ -419,7 +420,7 @@ function CadastroMobilidade() {
 
     try {
       await axios.put(
-        `http://localhost:3333/mobility/students/${editingStudent.id}`,
+        `${API_URL}/mobility/students/${editingStudent.id}`,
         editingStudent,
         getHeaders()
       );
@@ -435,7 +436,7 @@ function CadastroMobilidade() {
     if (!editingMobility) return;
 
     try {
-      await axios.delete(`http://localhost:3333/mobility/students/${studentId}`, getHeaders());
+      await axios.delete(`${API_URL}/mobility/students/${studentId}`, getHeaders());
       showToast("Estudante removido com sucesso!", "success");
       refreshEditingMobility(editingMobility.id);
     } catch (err: any) {
@@ -454,7 +455,7 @@ function CadastroMobilidade() {
 
     try {
       await axios.post(
-        `http://localhost:3333/mobility/${editingMobility.id}/students`,
+        `${API_URL}/mobility/${editingMobility.id}/students`,
         studentForm,
         getHeaders()
       );
@@ -482,7 +483,7 @@ function CadastroMobilidade() {
     if (!deletingMobility) return;
 
     try {
-      await axios.delete(`http://localhost:3333/mobility/${deletingMobility.id}`, getHeaders());
+      await axios.delete(`${API_URL}/mobility/${deletingMobility.id}`, getHeaders());
       showToast("Registo de mobilidade excluído com sucesso!", "success");
       setDeletingMobility(null);
       fetchMobilities();

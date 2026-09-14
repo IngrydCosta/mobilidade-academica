@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_URL } from "../../services/api";
 
 type University = {
   id: string;
@@ -20,7 +21,7 @@ export default function UniversityFilter({ value, onChange, disabled = false }: 
 
     async function load() {
       try {
-        const resposta = await axios.get("http://localhost:3333/university", {
+        const resposta = await axios.get(`${API_URL}/university`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

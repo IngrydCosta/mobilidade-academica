@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import { FiEdit2, FiSearch } from "react-icons/fi";
 import axios from "axios";
 import { useToast } from "../context/ToastContext";
+import { API_URL } from "../services/api";
 
 type UniversityData = {
   id: string;
@@ -19,14 +20,15 @@ function CadastroUniversidades() {
   const { showToast } = useToast();
   const [name, setName] = useState("");
   const [country, setCountry] = useState("Selecione");
+
   const [university, setUniversity] = useState<UniversityData[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [editingUniversity, setEditingUniversity] = useState<UniversityData | null>(null);
   const [editName, setEditName] = useState("");
   const [editCountry, setEditCountry] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
   const getHeaders = () => {
@@ -36,7 +38,7 @@ function CadastroUniversidades() {
 
   async function fetchUniversities() {
     try {
-      const resposta = await axios.get("http://localhost:3333/university", getHeaders());
+      const resposta = await axios.get(`${API_URL}/university`, getHeaders());
       setUniversity(resposta.data);
     } catch (error) {
       console.error("Erro ao buscar universidades", error);
@@ -62,7 +64,7 @@ function CadastroUniversidades() {
 
     try {
       await axios.post(
-        "http://localhost:3333/university",
+        `${API_URL}/university`,
         {
           nome: name,
           pais: country,
@@ -85,7 +87,7 @@ function CadastroUniversidades() {
 
     try {
       await axios.put(
-        `http://localhost:3333/university/${editingUniversity.id}`,
+        `${API_URL}/university/${editingUniversity.id}`,
         {
           nome: editName,
           pais: editCountry,

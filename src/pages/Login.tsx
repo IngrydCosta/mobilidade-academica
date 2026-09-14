@@ -4,6 +4,7 @@ import Input from '../components/ui/Input';
 import axios from "axios";
 import Button from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
+import { API_URL } from '../services/api';
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ function Login() {
     e?.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:3333/auth/login", {
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email: email,
         password: password,
       });
@@ -47,7 +48,7 @@ function Login() {
     setForgotLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3333/auth/forgot-password', {
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, {
         email: forgotEmail,
       });
 

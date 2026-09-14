@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Table, { type Column } from "../components/Table";
 import UniversityModal from "../components/UniversityModal";
+import { API_URL } from "../services/api";
 
 type DashboardData = {
   cards: {
@@ -81,7 +82,7 @@ function DashboardInterno() {
 
     async function findDashboard() {
       try {
-        const resposta = await axios.get("http://localhost:3333/dashboard/private", {
+        const resposta = await axios.get(`${API_URL}/dashboard/private`, {
           headers: { Authorization: `Bearer ${token}` },
           params: {
             university: universityFilter || undefined,

@@ -5,6 +5,7 @@ import Title from "../components/ui/Title"
 import Table, { type Column } from "../components/Table";
 import Button from "../components/ui/Button";
 import axios from "axios";
+import { API_URL } from "../services/api";
 
 
 
@@ -52,7 +53,7 @@ function Rankings() {
 
     async function findRanking() {
       try{
-        const resposta = await axios.get("http://localhost:3333/ranking", {
+        const resposta = await axios.get(`${API_URL}/ranking`, {
           headers: {Authorization: `Bearer ${token}` },
           params: { year: yearFilter },
         });

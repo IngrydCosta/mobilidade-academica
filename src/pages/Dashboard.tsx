@@ -11,6 +11,7 @@ import GraficoRow from "../components/GraficoRow";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Card from "../components/Card";
+import { API_URL } from "../services/api";
 
 type DashboardData = {
   cards: {
@@ -32,8 +33,6 @@ type DashboardData = {
   };
 };
 
-
-
 function Dashboard() {
 
    const { t } = useTranslation();
@@ -44,7 +43,7 @@ useEffect(() => {
   
       async function findDashboard() {
         try {
-          const resposta = await axios.get("http://localhost:3333/dashboard/public", {
+          const resposta = await axios.get(`${API_URL}/dashboard/public`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

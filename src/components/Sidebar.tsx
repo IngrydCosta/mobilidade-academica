@@ -8,6 +8,7 @@ import { IoBookOutline } from "react-icons/io5";
 import { AiOutlineLogin } from "react-icons/ai";
 import { GoTrophy } from "react-icons/go";
 import { FiKey } from "react-icons/fi";
+import { API_URL } from "../services/api";
 import axios from 'axios';
 import Input from './ui/Input';
 
@@ -48,7 +49,7 @@ function Sidebar() {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('@mobilidade:token');
       const response = await axios.post(
-        'http://localhost:3333/auth/change-password',
+        `${API_URL}/auth/change-password`,
         { oldPassword, newPassword },
         {
           headers: { Authorization: `Bearer ${token}` },
