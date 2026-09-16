@@ -620,6 +620,26 @@ function CadastroMobilidade() {
           </section>
         </div>
 
+        <section className="p-6 bg-[#FFFFFF] border border-gray-300 rounded-lg mt-6">
+          <div>
+            <Title title="Instruções para o Registo" size="text-2xl" />
+            <div className="flex flex-col gap-2 mt-3 text-[#404c4e]">
+              <p>
+                <strong>1. Seleção:</strong> Escolha a Universidade, o Ano e o Semestre de referência.
+              </p>
+              <p>
+                <strong>2. Planilha Modelo:</strong> Baixe o modelo e preencha todos os campos obrigatórios dos estudantes (Matrícula, Nome, Email, Países de Origem/Destino, Tipo de Mobilidade, Cursos e Universidades de Origem/Destino).
+              </p>
+              <p>
+                <strong>3. Contagem Automática:</strong> Ao importar a planilha, o sistema contabilizará instantaneamente os estudantes <strong>Enviados</strong> e <strong>Recebidos</strong> com base no Tipo de Mobilidade de cada aluno.
+              </p>
+              <p>
+                <strong>4. Confirmação e Salvamento:</strong> Confira os totais calculados na Prévia e clique em <strong>Salvar Registo</strong> para concluir o cadastro.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {(() => {
           const filteredMobilities = mobilities.filter((item) => {
             const term = searchTerm.toLowerCase();
