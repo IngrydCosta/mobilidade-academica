@@ -57,30 +57,22 @@ const ToastItem: React.FC<{ toast: ToastMessage; onClose: () => void }> = ({ toa
     switch (toast.type) {
       case "success":
         return {
-          bg: "bg-[#F0FDF4]",
-          border: "border-[#22C55E]",
-          text: "text-[#15803D]",
-          icon: <FiCheckCircle className="w-5 h-5 text-[#22C55E] shrink-0" />,
+          border: "border-l-[#16A34A]",
+          icon: <FiCheckCircle className="w-5 h-5 text-[#16A34A] shrink-0" />,
         };
       case "error":
         return {
-          bg: "bg-[#FEF2F2]",
-          border: "border-[#EF4444]",
-          text: "text-[#991B1B]",
-          icon: <FiAlertCircle className="w-5 h-5 text-[#EF4444] shrink-0" />,
+          border: "border-l-[#DC2626]",
+          icon: <FiAlertCircle className="w-5 h-5 text-[#DC2626] shrink-0" />,
         };
       case "warning":
         return {
-          bg: "bg-[#FFFBEB]",
-          border: "border-[#F59E0B]",
-          text: "text-[#B45309]",
-          icon: <FiAlertTriangle className="w-5 h-5 text-[#F59E0B] shrink-0" />,
+          border: "border-l-[#D97706]",
+          icon: <FiAlertTriangle className="w-5 h-5 text-[#D97706] shrink-0" />,
         };
       default:
         return {
-          bg: "bg-[#F0F4F8]",
-          border: "border-[#173764]",
-          text: "text-[#0C2445]",
+          border: "border-l-[#173764]",
           icon: <FiInfo className="w-5 h-5 text-[#173764] shrink-0" />,
         };
     }
@@ -90,10 +82,10 @@ const ToastItem: React.FC<{ toast: ToastMessage; onClose: () => void }> = ({ toa
 
   return (
     <div
-      className={`pointer-events-auto flex items-start gap-3 p-4 rounded-lg shadow-xl transition-all duration-300 transform translate-y-0 ${style.bg} ${style.border}`}
+      className={`pointer-events-auto flex items-start gap-3 p-4 bg-white rounded-lg shadow-md border border-gray-200 border-l-4 ${style.border} transition-all duration-300 transform translate-y-0`}
     >
       <div className="mt-0.5">{style.icon}</div>
-      <div className={`flex-1 text-sm font-medium leading-snug ${style.text}`}>{toast.message}</div>
+      <div className="flex-1 text-sm font-medium leading-snug text-gray-800">{toast.message}</div>
       <button
         onClick={onClose}
         className="text-gray-400 hover:text-gray-600 transition-colors p-0.5 rounded-md cursor-pointer shrink-0"

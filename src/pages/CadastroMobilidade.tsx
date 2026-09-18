@@ -107,9 +107,6 @@ function CadastroMobilidade() {
   const itemsPerPage = 8;
 
   const [editingMobility, setEditingMobility] = useState<MobilityRecord | null>(null);
-  const [editYear, setEditYear] = useState<number>(2024);
-  const [editSemester, setEditSemester] = useState<number>(1);
-  const [editUniversityId, setEditUniversityId] = useState<string>("");
 
   const [editingStudent, setEditingStudent] = useState<StudentFromSheet | null>(null);
   const [showAddStudentModal, setShowAddStudentModal] = useState<boolean>(false);
@@ -273,33 +270,48 @@ function CadastroMobilidade() {
           const universidadeOrigem = String(row[colIndices["UNIVERSIDADE DE ORIGEM"]] ?? "").trim();
           const universidadeDestino = String(row[colIndices["UNIVERSIDADE DE DESTINO"]] ?? "").trim();
 
-          if (!matricula) {
-            showToast(`Erro na linha ${lineNum}: O campo "Nº DE MATRÍCULA DO ESTUDANTE" é obrigatório.`, "error");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
+          const requiredFields: { label: string; value: string }[] = [
+            { label: "Nº DE MATRÍCULA DO ESTUDANTE", value: matricula },
+            { label: "NOME DO ESTUDANTE", value: nome },
+            { label: "EMAIL DO ESTUDANTE", value: email },
+            { label: "PAÍS DE ORIGEM", value: paisOrigem },
+            { label: "PAÍS DE DESTINO", value: paisDestino },
+            { label: "CURSO DE ORIGEM", value: cursoOrigem },
+            { label: "CURSO DE DESTINO", value: cursoDestino },
+            { label: "UNIVERSIDADE DE ORIGEM", value: universidadeOrigem },
+            { label: "UNIVERSIDADE DE DESTINO", value: universidadeDestino },
+          ];
+
+          let fieldError = false;
+          for (const field of requiredFields) {
+            if (!field.value) {
+              showToast(
+                `Erro na linha ${lineNum}: O campo "${field.label}" é obrigatório.`,
+                "error"
+              );
+              if (fileInputRef.current) fileInputRef.current.value = "";
+              fieldError = true;
+              break;
+            }
           }
-          if (!nome) {
-            showToast(`Erro na linha ${lineNum}: O campo "NOME DO ESTUDANTE" é obrigatório.`, "error");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
-          if (!email) {
-            showToast(`Erro na linha ${lineNum}: O campo "EMAIL DO ESTUDANTE" é obrigatório.`, "error");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            return;
-          }
+          if (fieldError) return;
 
           const normTipo = normalize(rawTipo);
-          let tipoFinal = "ENVIADO";
+          let tipoFinal = "";
 
-          if (["ENVIADO", "ENVIADOS", "SAIDA", "OUTBOUND"].includes(normTipo)) {
+          if (normTipo === "ENVIADO") {
             tipoFinal = "ENVIADO";
             sentCount++;
-          } else if (["RECEBIDO", "RECEBIDOS", "ENTRADA", "INBOUND"].includes(normTipo)) {
+          } else if (normTipo === "RECEBIDO") {
             tipoFinal = "RECEBIDO";
             receivedCount++;
           } else {
-            sentCount++;
+            showToast(
+              `Erro na linha ${lineNum}: "TIPO DE MOBILIDADE" inválido ou vazio. Preencha exclusivamente com ENVIADO ou RECEBIDO.`,
+              "error"
+            );
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
           }
 
           parsedStudents.push({
@@ -381,29 +393,6 @@ function CadastroMobilidade() {
     }
   }
 
-  async function handleUpdateMobility(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingMobility) return;
-
-    try {
-      await axios.put(
-        `${API_URL}/mobility/${editingMobility.id}`,
-        {
-          ano: editYear,
-          semestre: editSemester,
-          universityId: editUniversityId,
-        },
-        getHeaders()
-      );
-
-      showToast("Registo de mobilidade atualizado com sucesso!", "success");
-      setEditingMobility(null);
-      fetchMobilities();
-    } catch (err: any) {
-      showToast(err.response?.data?.message || "Erro ao atualizar registo de mobilidade.", "error");
-    }
-  }
-
   async function refreshEditingMobility(mobilityId: string) {
     try {
       const res = await axios.get(`${API_URL}/mobility/${mobilityId}`, getHeaders());
@@ -418,10 +407,33 @@ function CadastroMobilidade() {
     e.preventDefault();
     if (!editingStudent || !editingStudent.id || !editingMobility) return;
 
+    if (
+      !editingStudent.matricula?.trim() ||
+      !editingStudent.nome?.trim() ||
+      !editingStudent.email?.trim() ||
+      !editingStudent.paisOrigem?.trim() ||
+      !editingStudent.paisDestino?.trim() ||
+      !editingStudent.tipoMobilidade?.trim() ||
+      !editingStudent.cursoOrigem?.trim() ||
+      !editingStudent.cursoDestino?.trim() ||
+      !editingStudent.universidadeOrigem?.trim() ||
+      !editingStudent.universidadeDestino?.trim()
+    ) {
+      showToast("Preencha todos os 10 campos obrigatórios do estudante.", "warning");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editingStudent.email.trim())) {
+      showToast("Formato de e-mail inválido.", "warning");
+      return;
+    }
+
     try {
+      const { id, ...updatePayload } = editingStudent;
       await axios.put(
         `${API_URL}/mobility/students/${editingStudent.id}`,
-        editingStudent,
+        updatePayload,
         getHeaders()
       );
       showToast("Estudante atualizado com sucesso!", "success");
@@ -448,8 +460,25 @@ function CadastroMobilidade() {
     e.preventDefault();
     if (!editingMobility) return;
 
-    if (!studentForm.nome || !studentForm.email || !studentForm.matricula) {
-      showToast("Preencha todos os campos obrigatórios (Nome, E-mail e Matrícula).", "warning");
+    if (
+      !studentForm.matricula?.trim() ||
+      !studentForm.nome?.trim() ||
+      !studentForm.email?.trim() ||
+      !studentForm.paisOrigem?.trim() ||
+      !studentForm.paisDestino?.trim() ||
+      !studentForm.tipoMobilidade?.trim() ||
+      !studentForm.cursoOrigem?.trim() ||
+      !studentForm.cursoDestino?.trim() ||
+      !studentForm.universidadeOrigem?.trim() ||
+      !studentForm.universidadeDestino?.trim()
+    ) {
+      showToast("Preencha todos os 10 campos obrigatórios do estudante.", "warning");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(studentForm.email.trim())) {
+      showToast("Formato de e-mail inválido.", "warning");
       return;
     }
 
@@ -494,9 +523,6 @@ function CadastroMobilidade() {
 
   function startEdit(item: MobilityRecord) {
     setEditingMobility(item);
-    setEditYear(item.ano);
-    setEditSemester(item.semestre || 1);
-    setEditUniversityId(item.universityId);
   }
 
   return (
@@ -628,10 +654,10 @@ function CadastroMobilidade() {
                 <strong>1. Seleção:</strong> Escolha a Universidade, o Ano e o Semestre de referência.
               </p>
               <p>
-                <strong>2. Planilha Modelo:</strong> Baixe o modelo e preencha todos os campos obrigatórios dos estudantes (Matrícula, Nome, Email, Países de Origem/Destino, Tipo de Mobilidade, Cursos e Universidades de Origem/Destino).
+                <strong>2. Planilha Modelo:</strong> Baixe o modelo oficial. <strong>Todas as informações são obrigatórias:</strong> certifique-se de preencher todos os campos de cada estudante (Matrícula, Nome, E-mail, Países de Origem/Destino, Tipo de Mobilidade, Cursos e Universidades de Origem/Destino). Nenhuma linha ou campo pode ficar em branco.
               </p>
               <p>
-                <strong>3. Contagem Automática:</strong> Ao importar a planilha, o sistema contabilizará instantaneamente os estudantes <strong>Enviados</strong> e <strong>Recebidos</strong> com base no Tipo de Mobilidade de cada aluno.
+                <strong>3. Contagem Automática e Validação:</strong> Ao importar a planilha, o sistema validará se todos os campos estão preenchidos e contabilizará instantaneamente os estudantes <strong>Enviados</strong> e <strong>Recebidos</strong> com base no Tipo de Mobilidade (use <strong>ENVIADO</strong> ou <strong>RECEBIDO</strong>).
               </p>
               <p>
                 <strong>4. Confirmação e Salvamento:</strong> Confira os totais calculados na Prévia e clique em <strong>Salvar Registo</strong> para concluir o cadastro.
@@ -785,150 +811,121 @@ function CadastroMobilidade() {
         })()}
 
         {editingMobility && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 max-w-5xl w-full shadow-xl my-8 max-h-[90vh] flex flex-col">
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
+            <div className="bg-white rounded-lg p-6 max-w-6xl w-full shadow-lg max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                 <div>
-                  <h4 className="text-xl font-bold text-[#0E284E] font-serif">Editar Registo de Mobilidade</h4>
+                  <h3 className="text-xl font-bold text-[#0E284E]">
+                    Editar Registo de Mobilidade
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {editingMobility.university?.nome}
+                    {editingMobility.university?.pais ? ` — ${editingMobility.university.pais}` : ""}
+                    {" • "}
+                    Ano {editingMobility.ano} ({editingMobility.semestre || 1}º Semestre)
+                  </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setEditingMobility(null)}
-                  className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 cursor-pointer"
+                  className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="overflow-y-auto flex-1 pr-1 space-y-6">
-                <form onSubmit={handleUpdateMobility} className="space-y-4 bg-[#F8FAFC] p-4 rounded-lg border border-gray-200">
-                  <h5 className="font-semibold text-sm text-[#0E284E] uppercase tracking-wider">Dados do Lote</h5>
+              <div className="py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4 text-sm text-[#404c4e]">
+                <div className="flex flex-wrap gap-6">
+                  <span>Enviados: <strong className="text-gray-800">{editingMobility.enviados}</strong></span>
+                  <span>Recebidos: <strong className="text-gray-800">{editingMobility.recebidos}</strong></span>
+                  <span>Total: <strong className="text-gray-800">{editingMobility.enviados + editingMobility.recebidos}</strong></span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStudentForm({
+                      matricula: "",
+                      nome: "",
+                      email: "",
+                      paisOrigem: editingMobility.university?.pais || "",
+                      paisDestino: "",
+                      tipoMobilidade: "ENVIADO",
+                      cursoOrigem: "",
+                      cursoDestino: "",
+                      universidadeOrigem: editingMobility.university?.nome || "",
+                      universidadeDestino: "",
+                    });
+                    setShowAddStudentModal(true);
+                  }}
+                  className="bg-[#173764] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-[#0E284E] cursor-pointer"
+                >
+                  + Adicionar Estudante
+                </button>
+              </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <UniversityFilter
-                        value={editUniversityId}
-                        onChange={setEditUniversityId}
-                        disabled={isGestor}
-                      />
-                    </div>
-
-                    <div>
-                      <YearFilter
-                        value={String(editYear)}
-                        onChange={(val) => setEditYear(Number(val))}
-                      />
-                    </div>
-
-                    <div>
-                      <SemesterFilter
-                        value={editSemester}
-                        onChange={(val) => setEditSemester(Number(val))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-6 items-center pt-2 text-sm text-gray-700 font-medium">
-                    <span>Enviados: <strong>{editingMobility.enviados}</strong></span>
-                    <span>Recebidos: <strong>{editingMobility.recebidos}</strong></span>
-                    <span>Total: <strong>{editingMobility.enviados + editingMobility.recebidos}</strong></span>
-                    <span className="text-xs text-gray-400 font-normal">
-                      (calculado automaticamente)
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm bg-[#173764] text-white font-medium rounded-md hover:bg-[#0E284E] cursor-pointer transition-colors"
-                    >
-                      Salvar Dados do Lote
-                    </button>
-                  </div>
-                </form>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h5 className="font-semibold text-base text-[#0E284E]">
-                      Estudantes no Lote ({editingMobility.students?.length || 0})
-                    </h5>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStudentForm({
-                          matricula: "",
-                          nome: "",
-                          email: "",
-                          paisOrigem: editingMobility.university?.pais || "",
-                          paisDestino: "",
-                          tipoMobilidade: "ENVIADO",
-                          cursoOrigem: "",
-                          cursoDestino: "",
-                          universidadeOrigem: editingMobility.university?.nome || "",
-                          universidadeDestino: "",
-                        });
-                        setShowAddStudentModal(true);
-                      }}
-                      className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer font-medium transition-colors"
-                    >
-                      + Adicionar Estudante
-                    </button>
-                  </div>
-
-                  <div className="overflow-x-auto border border-gray-200 rounded-lg max-h-60 overflow-y-auto">
-                    <table className="w-full border-collapse text-left text-xs">
-                      <thead className="bg-[#F3F6F8] text-[#404c4e] sticky top-0">
+              <div className="flex-1 overflow-y-auto mt-4">
+                <div className="overflow-x-auto border border-gray-200 rounded-md">
+                  <table className="w-full border-collapse text-left text-sm">
+                    <thead className="bg-[#F3F6F8] text-[#404c4e] sticky top-0">
+                      <tr className="h-[42px] whitespace-nowrap text-xs font-semibold">
+                        <th className="p-3">MATRÍCULA</th>
+                        <th className="p-3">NOME</th>
+                        <th className="p-3">EMAIL</th>
+                        <th className="p-3">TIPO</th>
+                        <th className="p-3">PAÍS ORIGEM</th>
+                        <th className="p-3">UNIVERSIDADE ORIGEM</th>
+                        <th className="p-3">CURSO ORIGEM</th>
+                        <th className="p-3">PAÍS DESTINO</th>
+                        <th className="p-3">UNIVERSIDADE DESTINO</th>
+                        <th className="p-3">CURSO DESTINO</th>
+                        <th className="p-3 text-right sticky right-0 bg-[#F3F6F8]">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(!editingMobility.students || editingMobility.students.length === 0) ? (
                         <tr>
-                          <th className="p-2.5">MATRÍCULA</th>
-                          <th className="p-2.5">NOME</th>
-                          <th className="p-2.5">EMAIL</th>
-                          <th className="p-2.5">TIPO</th>
-                          <th className="p-2.5">CURSO ORIGEM</th>
-                          <th className="p-2.5 text-right">AÇÕES</th>
+                          <td colSpan={11} className="p-6 text-center text-gray-500">
+                            Nenhum estudante registado neste lote.
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {(!editingMobility.students || editingMobility.students.length === 0) ? (
-                          <tr>
-                            <td colSpan={6} className="p-4 text-center text-gray-500">
-                              Nenhum estudante neste lote de mobilidade.
+                      ) : (
+                        editingMobility.students.map((st) => (
+                          <tr key={st.id || st.matricula} className="border-b border-gray-200 hover:bg-gray-50 text-sm whitespace-nowrap">
+                            <td className="p-3 text-gray-800">{st.matricula}</td>
+                            <td className="p-3 text-gray-800">{st.nome}</td>
+                            <td className="p-3 text-gray-600">{st.email}</td>
+                            <td className="p-3 text-gray-700">{st.tipoMobilidade}</td>
+                            <td className="p-3 text-gray-600">{st.paisOrigem || "-"}</td>
+                            <td className="p-3 text-gray-600">{st.universidadeOrigem || "-"}</td>
+                            <td className="p-3 text-gray-600">{st.cursoOrigem || "-"}</td>
+                            <td className="p-3 text-gray-600">{st.paisDestino || "-"}</td>
+                            <td className="p-3 text-gray-600">{st.universidadeDestino || "-"}</td>
+                            <td className="p-3 text-gray-600">{st.cursoDestino || "-"}</td>
+                            <td className="p-3 text-right sticky right-0 bg-white">
+                              <div className="flex justify-end gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingStudent(st)}
+                                  className="p-1 text-[#0E284E] hover:text-[#173764] cursor-pointer"
+                                  title="Editar Estudante"
+                                >
+                                  <FiEdit2 size={15} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingStudentConfirm(st)}
+                                  className="p-1 text-[#173764] hover:text-[#0E284E] cursor-pointer"
+                                  title="Excluir Estudante"
+                                >
+                                  <FiTrash2 size={15} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
-                        ) : (
-                          editingMobility.students.map((st) => (
-                            <tr key={st.id || st.matricula} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="p-2.5 font-mono text-gray-700">{st.matricula}</td>
-                              <td className="p-2.5 font-medium text-gray-800">{st.nome}</td>
-                              <td className="p-2.5 text-gray-600">{st.email}</td>
-                              <td className="p-2.5 text-gray-700 font-medium">
-                                {st.tipoMobilidade}
-                              </td>
-                              <td className="p-2.5 text-gray-600 truncate max-w-[120px]" title={st.cursoOrigem}>{st.cursoOrigem || "-"}</td>
-                              <td className="p-2.5 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingStudent(st)}
-                                    className="p-1 text-[#0E284E] hover:text-blue-700 cursor-pointer"
-                                    title="Editar Estudante"
-                                  >
-                                    <FiEdit2 size={14} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeletingStudentConfirm(st)}
-                                    className="p-1 text-[#173764] hover:text-[#0E284E] cursor-pointer"
-                                    title="Excluir Estudante"
-                                  >
-                                    <FiTrash2 size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -936,9 +933,9 @@ function CadastroMobilidade() {
                 <button
                   type="button"
                   onClick={() => setEditingMobility(null)}
-                  className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer font-medium"
+                  className="px-5 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 cursor-pointer font-medium"
                 >
-                  Concluir / Fechar
+                  Fechar
                 </button>
               </div>
             </div>
@@ -947,25 +944,36 @@ function CadastroMobilidade() {
 
         {editingStudent && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
-            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
-              <h4 className="text-lg font-bold text-[#0E284E] mb-4 font-serif">Editar Estudante</h4>
-              <form onSubmit={handleUpdateStudent} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full shadow-xl max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                <h4 className="text-xl font-bold text-[#0E284E]">Editar Estudante</h4>
+                <button
+                  type="button"
+                  onClick={() => setEditingStudent(null)}
+                  className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateStudent} className="space-y-4 overflow-y-auto flex-1 pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Matrícula</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Matrícula *</label>
                     <input
                       type="text"
+                      required
                       value={editingStudent.matricula}
                       onChange={(e) => setEditingStudent({ ...editingStudent, matricula: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Tipo de Mobilidade</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Tipo de Mobilidade *</label>
                     <select
                       value={editingStudent.tipoMobilidade}
                       onChange={(e) => setEditingStudent({ ...editingStudent, tipoMobilidade: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs cursor-pointer"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 bg-white cursor-pointer outline-none focus:border-[#173764]"
                     >
                       <option value="ENVIADO">ENVIADO</option>
                       <option value="RECEBIDO">RECEBIDO</option>
@@ -973,58 +981,112 @@ function CadastroMobilidade() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">Nome do Estudante</label>
-                  <input
-                    type="text"
-                    value={editingStudent.nome}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, nome: e.target.value })}
-                    className="w-full border border-gray-300 rounded p-2 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">E-mail</label>
-                  <input
-                    type="email"
-                    value={editingStudent.email}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, email: e.target.value })}
-                    className="w-full border border-gray-300 rounded p-2 text-xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Origem</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Nome do Estudante *</label>
                     <input
                       type="text"
+                      required
+                      value={editingStudent.nome}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, nome: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">E-mail *</label>
+                    <input
+                      type="email"
+                      required
+                      value={editingStudent.email}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-gray-200">
+                  <h5 className="text-sm font-semibold text-[#0E284E] mb-3">Origem</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">País de Origem *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingStudent.paisOrigem}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, paisOrigem: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">Universidade de Origem *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingStudent.universidadeOrigem}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, universidadeOrigem: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Curso de Origem *</label>
+                    <input
+                      type="text"
+                      required
                       value={editingStudent.cursoOrigem}
                       onChange={(e) => setEditingStudent({ ...editingStudent, cursoOrigem: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Destino</label>
-                    <input
-                      type="text"
-                      value={editingStudent.cursoDestino}
-                      onChange={(e) => setEditingStudent({ ...editingStudent, cursoDestino: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
+                <div className="pt-2 border-t border-gray-200">
+                  <h5 className="text-sm font-semibold text-[#0E284E] mb-3">Destino</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">País de Destino *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingStudent.paisDestino}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, paisDestino: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">Universidade de Destino *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingStudent.universidadeDestino}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, universidadeDestino: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Curso de Destino *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editingStudent.cursoDestino}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, cursoDestino: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => setEditingStudent(null)}
-                    className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-800 cursor-pointer"
+                    className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 cursor-pointer font-medium"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 text-xs bg-[#173764] text-white rounded hover:bg-[#0E284E] cursor-pointer font-medium"
+                    className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer font-medium"
                   >
                     Salvar Estudante
                   </button>
@@ -1036,26 +1098,37 @@ function CadastroMobilidade() {
 
         {showAddStudentModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
-            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
-              <h4 className="text-lg font-bold text-[#0E284E] mb-4 font-serif">Adicionar Estudante</h4>
-              <form onSubmit={handleAddStudent} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full shadow-xl max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                <h4 className="text-xl font-bold text-[#0E284E]">Adicionar Estudante</h4>
+                <button
+                  type="button"
+                  onClick={() => setShowAddStudentModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddStudent} className="space-y-4 overflow-y-auto flex-1 pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Matrícula *</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Matrícula *</label>
                     <input
                       type="text"
+                      required
                       value={studentForm.matricula}
                       onChange={(e) => setStudentForm({ ...studentForm, matricula: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
                       placeholder="Ex: 2024001"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Tipo de Mobilidade</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Tipo de Mobilidade *</label>
                     <select
                       value={studentForm.tipoMobilidade}
                       onChange={(e) => setStudentForm({ ...studentForm, tipoMobilidade: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs cursor-pointer"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 bg-white cursor-pointer outline-none focus:border-[#173764]"
                     >
                       <option value="ENVIADO">ENVIADO</option>
                       <option value="RECEBIDO">RECEBIDO</option>
@@ -1063,62 +1136,122 @@ function CadastroMobilidade() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">Nome do Estudante *</label>
-                  <input
-                    type="text"
-                    value={studentForm.nome}
-                    onChange={(e) => setStudentForm({ ...studentForm, nome: e.target.value })}
-                    className="w-full border border-gray-300 rounded p-2 text-xs"
-                    placeholder="Nome completo"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">E-mail *</label>
-                  <input
-                    type="email"
-                    value={studentForm.email}
-                    onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                    className="w-full border border-gray-300 rounded p-2 text-xs"
-                    placeholder="email@estudante.eu"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Origem</label>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Nome do Estudante *</label>
                     <input
                       type="text"
+                      required
+                      value={studentForm.nome}
+                      onChange={(e) => setStudentForm({ ...studentForm, nome: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      placeholder="Nome completo"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">E-mail *</label>
+                    <input
+                      type="email"
+                      required
+                      value={studentForm.email}
+                      onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      placeholder="email@estudante.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-gray-200">
+                  <h5 className="text-sm font-semibold text-[#0E284E] mb-3">Origem</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">País de Origem *</label>
+                      <input
+                        type="text"
+                        required
+                        value={studentForm.paisOrigem}
+                        onChange={(e) => setStudentForm({ ...studentForm, paisOrigem: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                        placeholder="Ex: Portugal"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">Universidade de Origem *</label>
+                      <input
+                        type="text"
+                        required
+                        value={studentForm.universidadeOrigem}
+                        onChange={(e) => setStudentForm({ ...studentForm, universidadeOrigem: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                        placeholder="Ex: Universidade do Porto"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Curso de Origem *</label>
+                    <input
+                      type="text"
+                      required
                       value={studentForm.cursoOrigem}
                       onChange={(e) => setStudentForm({ ...studentForm, cursoOrigem: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 block mb-1">Curso Destino</label>
-                    <input
-                      type="text"
-                      value={studentForm.cursoDestino}
-                      onChange={(e) => setStudentForm({ ...studentForm, cursoDestino: e.target.value })}
-                      className="w-full border border-gray-300 rounded p-2 text-xs"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      placeholder="Ex: Engenharia Informática"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
+                <div className="pt-2 border-t border-gray-200">
+                  <h5 className="text-sm font-semibold text-[#0E284E] mb-3">Destino</h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">País de Destino *</label>
+                      <input
+                        type="text"
+                        required
+                        value={studentForm.paisDestino}
+                        onChange={(e) => setStudentForm({ ...studentForm, paisDestino: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                        placeholder="Ex: Brasil"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[#404c4e] font-medium text-sm block mb-1">Universidade de Destino *</label>
+                      <input
+                        type="text"
+                        required
+                        value={studentForm.universidadeDestino}
+                        onChange={(e) => setStudentForm({ ...studentForm, universidadeDestino: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                        placeholder="Ex: Universidade de São Paulo"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[#404c4e] font-medium text-sm block mb-1">Curso de Destino *</label>
+                    <input
+                      type="text"
+                      required
+                      value={studentForm.cursoDestino}
+                      onChange={(e) => setStudentForm({ ...studentForm, cursoDestino: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-800 outline-none focus:border-[#173764]"
+                      placeholder="Ex: Ciência da Computação"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => setShowAddStudentModal(false)}
-                    className="px-4 py-1.5 text-xs text-gray-600 hover:text-gray-800 cursor-pointer"
+                    className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 cursor-pointer font-medium"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 text-xs bg-[#173764] text-white rounded hover:bg-[#0E284E] cursor-pointer font-medium"
+                    className="px-4 py-2 text-sm bg-[#173764] text-white rounded-md hover:bg-[#0E284E] cursor-pointer font-medium"
                   >
-                    Adicionar
+                    Adicionar Estudante
                   </button>
                 </div>
               </form>
@@ -1129,7 +1262,7 @@ function CadastroMobilidade() {
         {deletingMobility && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-              <h4 className="text-lg font-bold text-[#0E284E] mb-2 font-serif">Excluir Mobilidade</h4>
+              <h4 className="text-lg font-bold text-[#0E284E] mb-2">Excluir Mobilidade</h4>
               <p className="text-sm text-gray-600 mb-4">
                 Tem certeza que deseja excluir este registo de mobilidade de{" "}
                 <strong>{deletingMobility.university?.nome}</strong> ({deletingMobility.ano})?
@@ -1157,7 +1290,7 @@ function CadastroMobilidade() {
         {deletingStudentConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 text-gray-800">
             <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-              <h4 className="text-lg font-bold text-[#0E284E] mb-2 font-serif">Excluir Estudante</h4>
+              <h4 className="text-lg font-bold text-[#0E284E] mb-2">Excluir Estudante</h4>
               <p className="text-sm text-gray-600 mb-4">
                 Tem certeza que deseja excluir o estudante <strong>{deletingStudentConfirm.nome}</strong> (Matrícula: {deletingStudentConfirm.matricula}) deste lote de mobilidade?
               </p>
