@@ -9,14 +9,15 @@ import {
   CartesianGrid,
 } from "recharts";
 
-type GraficoDataPoint = {
-  ano: string;
+export type GraficoPaisDataPoint = {
+  pais: string;
   enviados: number;
   recebidos: number;
+  total?: number;
 };
 
 type DashboardData = {
-  grafico: GraficoDataPoint[];
+  graficoPaises?: GraficoPaisDataPoint[];
 };
 
 type GraficoColProps = {
@@ -24,11 +25,7 @@ type GraficoColProps = {
 };
 
 function GraficoCol({ dashboardData }: GraficoColProps) {
-  const rawData = dashboardData?.grafico || [];
-
-  const data = rawData
-    .filter((item) => item.ano !== "0" && item.ano !== null)
-    .sort((a, b) => Number(a.ano) - Number(b.ano));
+  const data = dashboardData?.graficoPaises || [];
 
   if (data.length === 0) {
     return (
@@ -45,7 +42,7 @@ function GraficoCol({ dashboardData }: GraficoColProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           
           <XAxis
-            dataKey="ano"
+            dataKey="pais"
             tick={{ fill: "#404c4e" }}
             tickLine={false}
           />

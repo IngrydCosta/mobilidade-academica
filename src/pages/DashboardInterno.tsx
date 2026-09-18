@@ -28,8 +28,13 @@ type DashboardData = {
     enviados: number;
     recebidos: number;
   }>;
+  graficoPaises?: Array<{
+    pais: string;
+    enviados: number;
+    recebidos: number;
+    total: number;
+  }>;
   table: MobilityData[];
-  
 };
 
 type StudentData = {
@@ -181,7 +186,7 @@ function DashboardInterno() {
         </section>
 
         <section className="p-6 bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col gap-4">
-          <Title title="Comparação Anual" size="text-2xl" className="mb-0"/>
+          <Title title="Volume de Mobilidade por País" size="text-2xl" className="mb-0"/>
           <GraficoCol dashboardData={dashboard}/>
         </section>
 
