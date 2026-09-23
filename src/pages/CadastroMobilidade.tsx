@@ -362,6 +362,11 @@ function CadastroMobilidade() {
       return;
     }
 
+    if (!file || studentsFromSheet.length === 0) {
+      showToast("É obrigatório importar uma planilha com estudantes para cadastrar a mobilidade.", "warning");
+      return;
+    }
+
     try {
       setIsSaving(true);
 
